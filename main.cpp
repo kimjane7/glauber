@@ -8,7 +8,6 @@ int main(int argc, char *argv[]){
 
 	printf("\n%s\n","-------- GOLD --------");
 	Au->random_test(5);
-
 	printf("\n%s\n","-------- URANIUM --------");
 	U->random_test(5);
 

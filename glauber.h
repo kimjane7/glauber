@@ -17,6 +17,7 @@ public:
 	double get_T(double x, double y);
 	double random_01(mt19937 generator);
 	void random_test(int nmax);
+
 };
 
 CGlauber::CGlauber(int A_set){
@@ -59,7 +60,6 @@ double CGlauber::random_01(mt19937 generator){
 }
 
 void CGlauber::random_test(int nmax){
-
 	mt19937 generator(time(0));
 	printf("A = %i \nR = %lf fm\n", A, R);
 	double r, theta, phi, x, y, z;
