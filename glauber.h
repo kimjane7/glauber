@@ -17,16 +17,15 @@ public:
 	double get_T(double x, double y);
 	double random_01(mt19937 generator);
 	void random_test(int nmax);
+	void fixed_test(int nmax);
 
 };
 
 CGlauber::CGlauber(int A_set){
-
 	A = A_set;
 	double A_est, AP_est;
 	double R_est = pow(3.0*A/(4.0*pi*rho0),1.0/3.0), R_diff;
 	double r, dr = 1E-3*R_est;
-
 	do{
 		A_est = 0.0;
 		for(r = 0.0; r < R_est; r += dr){
@@ -60,19 +59,24 @@ double CGlauber::random_01(mt19937 generator){
 }
 
 void CGlauber::random_test(int nmax){
+	double r, theta, phi, x, y, z;
 	mt19937 generator(time(0));
 	printf("A = %i \nR = %lf fm\n", A, R);
-	double r, theta, phi, x, y, z;
 	for(int n = 0; n < nmax; n+=1){
 		r = R*random_01(generator);
 		theta = pi*random_01(generator);
-		phi = pi*random_01(generator);
+		phi = 2.0*pi*random_01(generator);
 		x = r*sin(theta)*cos(phi);
 		y = r*sin(theta)*sin(phi);
 		z = r*cos(theta);
 		printf("rho(%.3lf, %.3lf, %.3lf)=%lf \t T(%.3lf, %.3lf)=%lf\n",
 			   x,y,z,get_rho(x,y,z),x,y,get_T(x,y));
 	}
+}
+
+void CGlauber::fixed_test(int nmax){
+	double x, y, z;
+	printf("A = %i \nR = %lf fm\n", A, R);
 }
 
 #endif
