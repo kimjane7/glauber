@@ -16,5 +16,19 @@ def get_array(filename):
 	Z = np.array(Z)
 	return Z
 
-plt.contourf(Z,100,cmap=plt.cm.get_cmap('YlGnBu_r'))
-plt.contour(Z,5,colors='#FFFFFF')
+# set up figure
+plt.figure(1)
+plt.figure(figsize=(8,8))
+plt.rc('text', usetex=True)
+
+# plot contour map
+Z = get_array("thickness_test.dat")
+ax = plt.subplot(111)
+plt.contourf(Z,100,cmap=plt.cm.get_cmap('magma_r'))
+fig = plt.contour(Z,5,colors='#FFFFFF')
+ax.get_xaxis().set_visible(False)
+ax.get_yaxis().set_visible(False)
+plt.clabel(fig, inline=1, fontsize=10, manual = True)
+
+
+plt.show()
