@@ -1,5 +1,6 @@
 #ifndef GLAUBER_H
 #define GLAUBER_H
+#include <cmath>
 #include <cstdio>
 #include <boost/random.hpp>
 
@@ -115,30 +116,35 @@ void CNucleus::random_test(int nmax) {
 
 }
 
-
 class CPairs {
 public:
 	
 	// declare member variables
-	const static double dEdy_ = 1.0, fwn_ = 0.5; 
-	const static double sig_sat = 42.0, sig_nn = 42.0; 
+	const static double sig_nn = 42.0; 
 	CNucleus *N1_, *N2_;
-	double b_;
+	double dEdy_, sig_sat, fwn_, b_;
 
 	// declare member functions
-	CPairs(CNucleus *N1_set, CNucleus *N2_set, double b_set);
+	CPairs(CNucleus *N1_set, CNucleus *N2_set, double b_set, 
+		double dEdy_set, double sig_sat_set, double fwn_set);
 	double get_eps_wn(double x, double y);
 	double get_eps_sat(double x, double y);
 	double get_eps(double x, double y);
 
 };
 
-CPairs::CPairs(CNucleus *N1_set, CNucleus *N2_set, double b_set) {
+CPairs::CPairs(CNucleus *N1_set, CNucleus *N2_set, double b_set, 
+	double dEdy_set, double sig_sat_set, double fwn_set) {
 
 	// set nucleii and impact parameter
 	N1_ = N1_set;
 	N2_ = N2_set;
 	b_ = b_set;
+
+	// set parameters
+	dEdy_ = dEdy_set;
+	sig_sat = sig_sat_set;
+	fwn_ = fwn_set; 
 
 }
 
@@ -146,10 +152,12 @@ double CPairs::get_eps_wn(double x, double y) {
 
 	double prefactor, T1, T2, eps_wn;
 
-	// calculate wounded-nucleon energy density
+	// N1 centered at (-b/2,0) and N2 centered at (b/2,0)
 	prefactor = 0.5*dEdy_*sig_nn/sig_sat;
 	T1 = N1_->get_T(x+0.5*b_,y);
 	T2 = N2_->get_T(x-0.5*b_,y);
+
+	// calculate wounded-nucleon energy density
 	eps_wn = prefactor*(T1*(1.0-exp(-T2*sig_sat))+T2*(1.0-exp(-T1*sig_sat)));
 	
 	return eps_wn;
@@ -160,12 +168,14 @@ double CPairs::get_eps_sat(double x, double y) {
 
 	double prefactor, T1, T2, Tmin, Tmax, eps_sat;
 
-	// calculate saturation energy density
+	// N1 centered at (-b/2,0) and N2 centered at (b/2,0)
 	prefactor = dEdy_*sig_nn/sig_sat;
 	T1 = N1_->get_T(x+0.5*b_,y);
 	T2 = N2_->get_T(x-0.5*b_,y);
 	Tmin = 2.0*T1*T2/(T1+T2);
 	Tmax = 0.5*(T1+T2);
+
+	// calculate saturation energy density
 	eps_sat = prefactor*Tmin*(1.0-exp(-Tmax*sig_sat));
 	
 	return eps_sat;
