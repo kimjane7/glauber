@@ -22,7 +22,7 @@ plt.figure(figsize=(8,8))
 plt.rc('text', usetex=True)
 
 # plot contour map
-Z = get_array("thickness_test.dat")
+Z = get_array("T_test.dat")
 ax = plt.subplot(111)
 plt.contourf(Z,100,cmap=plt.cm.get_cmap('magma_r'))
 fig = plt.contour(Z,5,colors='#FFFFFF')

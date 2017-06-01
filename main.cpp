@@ -21,7 +21,7 @@ int main(int argc, char *argv[]){
 	CNucleus *Pb = new CNucleus(207);
 	CNucleus *U = new CNucleus(235);
 
-	Pb->fixed_test(5,"thickness_test.dat");
+	Pb->T_test(5,"T_test.dat");
 
 	/* WRITE FIXED TEST AND WRITE EPS TO FILE
 	printf("\n%s\n","-------- GOLD --------");
@@ -35,7 +35,7 @@ int main(int argc, char *argv[]){
 	*/
 
 	CPairs *Au_Pb = new CPairs(Au, Pb, 1.0, dEdy, sigma_sat, f_wn);
-	printf("Energy density = %lf\n", Au_Pb->get_epsilon(0.5,0.5));
+	//printf("Energy density = %lf\n", Au_Pb->get_epsilon(0.5,0.5));
 
 
 

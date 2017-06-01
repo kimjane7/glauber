@@ -27,7 +27,7 @@ public:
 	double get_T(double x, double y);
 	double random_01(RNGType generator);
 	void random_test(int nmax);
-	void fixed_test(int nmax, string filename);
+	void T_test(int nmax, string filename);
 
 };
 
@@ -120,7 +120,7 @@ void CNucleus::random_test(int nmax) {
 
 }
 
-void CNucleus::fixed_test(int nmax, string filename) {
+void CNucleus::T_test(int nmax, string filename) {
 
 	// open file 
 	ofstream file;
@@ -132,13 +132,12 @@ void CNucleus::fixed_test(int nmax, string filename) {
 		for(y = -1.25*R_; y < 1.25*R_; y += dy) {
 
 			file << get_T(x,y) << "\t";
-
 		}
 
 		file << "\n";
 	}
 
-	file << "Hello World!" << endl;
+	// close file
 	file.close();
 }
 
