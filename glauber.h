@@ -4,49 +4,55 @@
 #include <boost/random.hpp>
 
 const double pi = 4.0*atan(1.0);
-// Uniform rand dist over interval, takes RNG as arg
+// uniform rand dist over interval, takes RNG as arg
 using boost::uniform_01;
-// Mersenne Twister RNG
+// mersenne twister RNG
 typedef boost::mt19937 RNGType;
 
-class CGlauber {
+class CNucleus {
 public:
-	// Initialize member variables
-	const static double a_=0.53, rho0_=0.14;
+	
+	// declare member variables
+	const static double a_ = 0.53, rho0_ = 0.14;
 	double R_;
 	int A_;
 
-	// Declare member functions
-	CGlauber(int Aset);
+	// declare member functions
+	CNucleus(int Aset);
 	double get_rho(double x, double y, double z);
 	double get_T(double x, double y);
 	double random_01(RNGType generator);
 	void random_test(int nmax);
+
 };
 
-CGlauber::CGlauber(int A_set) {
-	// Set the nucleon number
+CNucleus::CNucleus(int A_set) {
+	
+	// set the nucleon number
 	A_ = A_set;
-
+	
+	// estimate for A(R) and A'(R)
 	double A_est, A_prime_est;
 	
-	// Estimate radius from nucleon number
+	// estimate radius from nucleon number
 	double R_est = pow(3.0*A_/(4.0*pi*rho0_), 1.0/3.0);
-	double R_diff; // Newton's method increment
+	
+	// newton's method increment
+	double R_diff; 
 
 	double r;
 	double dr = 1E-3*R_est;
 
-	// Perform Newton's Method to find actual radius
+	// perform newton's method to find actual radius
 	do {
+		
+		// calculate A from WS dist, density, and radius guess
 		A_est = 0.0;
-
-		// Calculate A from WS dist, density, and radius guess
 		for (r = 0.0; r < R_est; r += dr) {
 			A_est += 4.0*pi*rho0_*r*r*dr/(1.0+exp((r-R_est)/a_));
 		}
 		
-		// Update radius guess
+		// update radius guess
 		A_prime_est = 2.0*pi*rho0_*R_est*R_est;
 		R_diff = (A_-A_est)/A_prime_est;
 		R_est = R_est+R_diff;
@@ -56,22 +62,23 @@ CGlauber::CGlauber(int A_set) {
 	R_ = R_est;
 }
 
-double CGlauber::get_rho(double x, double y, double z) {
-	// Calculate distance from center
+double CNucleus::get_rho(double x, double y, double z) {
+	
+	// calculate distance from center
 	double r = pow(x*x+y*y+z*z,0.5);
 	
-	// Calculate Woods-Saxon density
+	// calculate Woods-Saxon density
 	double rho = rho0_/(1.0+exp((r-R_)/a_));
-	
+
 	return rho;
 }
 
-double CGlauber::get_T(double x, double y) {
-	// Initialize variables
+double CNucleus::get_T(double x, double y) {
+
+	// initialize variables
 	double T=0.0, z, z_bound = pow(R_*R_-x*x-y*y,0.5), dz = 2.0E-3*z_bound;
 	
-	// Integrate the density (rho) in the z direction
-	// to get thickness function
+	// integrate the density in the z-direction to get thickness
 	for(z=-z_bound; z<z_bound; z+=dz){
 		T+=get_rho(x,y,z)*dz;
 	}
@@ -79,30 +86,102 @@ double CGlauber::get_T(double x, double y) {
 	return T;
 }
 
-double CGlauber::random_01(RNGType generator) {
+double CNucleus::random_01(RNGType generator) {
 	static uniform_01<RNGType> dist(generator);
 	return dist();
 }
 
-void CGlauber::random_test(int nmax) {
+void CNucleus::random_test(int nmax) {
+
 	RNGType generator(time(0));
 	printf("A = %i \nR = %lf fm\n", A_, R_);
 	double r, theta, phi, x, y, z;
 	for(int n = 0; n < nmax; n+=1){
-		// Pick a random point in the nuclear space
+
+		// pick a random point in the nuclear space
 		r = R_*random_01(generator);
 		theta = pi*random_01(generator);
-		phi = 2*pi*random_01(generator);
+		phi = 2.0*pi*random_01(generator);
 		
-		// Transform coords
+		// transform coords
 		x = r*sin(theta)*cos(phi);
 		y = r*sin(theta)*sin(phi);
 		z = r*cos(theta);
 		
-		// Print test values
+		// print test values
 		printf("rho(%.3lf, %.3lf, %.3lf)=%lf \t T(%.3lf, %.3lf)=%lf\n",
 			   x,y,z,get_rho(x,y,z),x,y,get_T(x,y));
 	}
+
 }
+
+
+class CPairs {
+public:
+	
+	// declare member variables
+	const static double dEdy_ = 1.0, fwn_ = 0.5; 
+	const static double sig_sat = 42.0, sig_nn = 42.0; 
+	CNucleus *N1_, *N2_;
+	double b_;
+
+	// declare member functions
+	CPairs(CNucleus *N1_set, CNucleus *N2_set, double b_set);
+	double get_eps_wn(double x, double y);
+	double get_eps_sat(double x, double y);
+	double get_eps(double x, double y);
+
+};
+
+CPairs::CPairs(CNucleus *N1_set, CNucleus *N2_set, double b_set) {
+
+	// set nucleii and impact parameter
+	N1_ = N1_set;
+	N2_ = N2_set;
+	b_ = b_set;
+
+}
+
+double CPairs::get_eps_wn(double x, double y) {
+
+	double prefactor, T1, T2, eps_wn;
+
+	// calculate wounded-nucleon energy density
+	prefactor = 0.5*dEdy_*sig_nn/sig_sat;
+	T1 = N1_->get_T(x+0.5*b_,y);
+	T2 = N2_->get_T(x-0.5*b_,y);
+	eps_wn = prefactor*(T1*(1.0-exp(-T2*sig_sat))+T2*(1.0-exp(-T1*sig_sat)));
+	
+	return eps_wn;
+
+}
+
+double CPairs::get_eps_sat(double x, double y) {
+
+	double prefactor, T1, T2, Tmin, Tmax, eps_sat;
+
+	// calculate saturation energy density
+	prefactor = dEdy_*sig_nn/sig_sat;
+	T1 = N1_->get_T(x+0.5*b_,y);
+	T2 = N2_->get_T(x-0.5*b_,y);
+	Tmin = 2.0*T1*T2/(T1+T2);
+	Tmax = 0.5*(T1+T2);
+	eps_sat = prefactor*Tmin*(1.0-exp(-Tmax*sig_sat));
+	
+	return eps_sat;
+
+}
+
+double CPairs::get_eps(double x, double y) {
+
+	double eps;
+
+	// calculate total energy
+	eps = fwn_*get_eps_wn(x,y)+(1.0-fwn_)*get_eps_sat(x,y);
+
+	return eps;
+}
+
+
 
 #endif // GLAUBER_H
