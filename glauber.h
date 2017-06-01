@@ -2,12 +2,15 @@
 #define GLAUBER_H
 #include <cmath>
 #include <cstdio>
+#include <fstream>
+#include <string>
 #include <boost/random.hpp>
 
 const double pi = 4.0*atan(1.0);
 // uniform rand dist over interval, takes RNG as arg
 using boost::uniform_01;
 // mersenne twister RNG
+using namespace std;
 typedef boost::mt19937 RNGType;
 
 class CNucleus {
@@ -24,6 +27,7 @@ public:
 	double get_T(double x, double y);
 	double random_01(RNGType generator);
 	void random_test(int nmax);
+	void fixed_test(int nmax, string filename);
 
 };
 
@@ -80,7 +84,7 @@ double CNucleus::get_T(double x, double y) {
 	double T=0.0, z, z_bound = pow(R_*R_-x*x-y*y,0.5), dz = 2.0E-3*z_bound;
 	
 	// integrate the density in the z-direction to get thickness
-	for(z=-z_bound; z<z_bound; z+=dz){
+	for(z=-z_bound; z<z_bound; z+=dz) {
 		T+=get_rho(x,y,z)*dz;
 	}
 	
@@ -97,7 +101,7 @@ void CNucleus::random_test(int nmax) {
 	RNGType generator(time(0));
 	printf("A = %i \nR = %lf fm\n", A_, R_);
 	double r, theta, phi, x, y, z;
-	for(int n = 0; n < nmax; n+=1){
+	for(int n = 0; n < nmax; n+=1) {
 
 		// pick a random point in the nuclear space
 		r = R_*random_01(generator);
@@ -114,6 +118,28 @@ void CNucleus::random_test(int nmax) {
 			   x,y,z,get_rho(x,y,z),x,y,get_T(x,y));
 	}
 
+}
+
+void CNucleus::fixed_test(int nmax, string filename) {
+
+	// open file 
+	ofstream file;
+	file.open(filename.c_str());
+
+	// write thickness to file for various x and y
+	double x, y, dx = 1.0E-2*R_, dy = dx = 1.0E-2*R_;
+	for(x = -1.25*R_; x < 1.25*R_; x += dx) {
+		for(y = -1.25*R_; y < 1.25*R_; y += dy) {
+
+			file << get_T(x,y) << "\t";
+
+		}
+
+		file << "\n";
+	}
+
+	file << "Hello World!" << endl;
+	file.close();
 }
 
 class CPairs {

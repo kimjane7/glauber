@@ -17,6 +17,8 @@ int main(int argc, char *argv[]){
 	CNucleus *Pb = new CNucleus(207);
 	CNucleus *U = new CNucleus(235);
 
+	Au->fixed_test(5,"testing.dat");
+
 	/* WRITE FIXED TEST AND WRITE EPS TO FILE
 	printf("\n%s\n","-------- GOLD --------");
 	Au->random_test(5);
