@@ -23,6 +23,7 @@ public:
 
 	// declare member functions
 	CNucleus(int Aset);
+	double get_R();
 	double get_rho(double x, double y, double z);
 	double get_T(double x, double y);
 	double random_01(RNGType generator);
@@ -65,6 +66,10 @@ CNucleus::CNucleus(int A_set) {
 	} while(R_diff > dr);
 
 	R_ = R_est;
+}
+
+double CNucleus::get_R() {
+	return R_;
 }
 
 double CNucleus::get_rho(double x, double y, double z) {
@@ -127,7 +132,7 @@ void CNucleus::T_test(int nmax, string filename) {
 	file.open(filename.c_str());
 
 	// write thickness to file for various x and y
-	double x, y, dx = 1.0E-2*R_, dy = dx = 1.0E-2*R_;
+	double x, y, dx = 2.5*R_/nmax, dy = 2.5*R_/nmax;
 	for(x = -1.25*R_; x < 1.25*R_; x += dx) {
 		for(y = -1.25*R_; y < 1.25*R_; y += dy) {
 
@@ -152,9 +157,10 @@ public:
 	// declare member functions
 	CPairs(CNucleus *N1_set, CNucleus *N2_set, double b_set, 
 		double dEdy_set, double sig_sat_set, double fwn_set);
-	double get_epsilon_wn(double x, double y);
-	double get_epsilon_sat(double x, double y);
-	double get_epsilon(double x, double y);
+	double get_eps_wn(double x, double y);
+	double get_eps_sat(double x, double y);
+	double get_eps(double x, double y);
+	void eps_test(int nmax, string filename);
 
 };
 
@@ -173,9 +179,9 @@ CPairs::CPairs(CNucleus *N1_set, CNucleus *N2_set, double b_set,
 
 }
 
-double CPairs::get_epsilon_wn(double x, double y) {
+double CPairs::get_eps_wn(double x, double y) {
 
-	double prefactor, T1, T2, epsilon_wn;
+	double prefactor, T1, T2, eps_wn;
 
 	// N1 centered at (-b/2,0) and N2 centered at (b/2,0)
 	prefactor = 0.5*dEdy_*sig_nn/sig_sat_;
@@ -183,15 +189,15 @@ double CPairs::get_epsilon_wn(double x, double y) {
 	T2 = N2_->get_T(x-0.5*b_,y);
 
 	// calculate wounded-nucleon energy density
-	epsilon_wn = prefactor*(T1*(1.0-exp(-T2*sig_sat_))+T2*(1.0-exp(-T1*sig_sat_)));
+	eps_wn = prefactor*(T1*(1.0-exp(-T2*sig_sat_))+T2*(1.0-exp(-T1*sig_sat_)));
 	
-	return epsilon_wn;
+	return eps_wn;
 
 }
 
-double CPairs::get_epsilon_sat(double x, double y) {
+double CPairs::get_eps_sat(double x, double y) {
 
-	double prefactor, T1, T2, Tmin, Tmax, epsilon_sat;
+	double prefactor, T1, T2, Tmin, Tmax, eps_sat;
 
 	// N1 centered at (-b/2,0) and N2 centered at (b/2,0)
 	prefactor = dEdy_*sig_nn/sig_sat_;
@@ -201,20 +207,52 @@ double CPairs::get_epsilon_sat(double x, double y) {
 	Tmax = 0.5*(T1+T2);
 
 	// calculate saturation energy density
-	epsilon_sat = prefactor*Tmin*(1.0-exp(-Tmax*sig_sat_));
+	eps_sat = prefactor*Tmin*(1.0-exp(-Tmax*sig_sat_));
 	
-	return epsilon_sat;
+	return eps_sat;
 
 }
 
-double CPairs::get_epsilon(double x, double y) {
+double CPairs::get_eps(double x, double y) {
 
-	double epsilon;
+	double eps;
 
 	// calculate weighted average energy density
-	epsilon = fwn_*get_epsilon_wn(x,y)+(1.0-fwn_)*get_epsilon_sat(x,y);
+	eps = fwn_*get_eps_wn(x,y)+(1.0-fwn_)*get_eps_sat(x,y);
 
-	return epsilon;
+	return eps;
+}
+
+void CPairs::eps_test(int nmax, string filename) {
+
+	// open file 
+	ofstream file;
+	file.open(filename.c_str());
+
+	// calculate radii of nuclei
+	double R1 = N1_->get_R();
+	double R2 = N2_->get_R();
+
+	// find larger radii
+	double Rmax;
+	if(R1>=R2) Rmax = R1;
+	else Rmax = R2;
+
+
+	// write energy density to file for various x and y
+	double x, y, dx = (1.25*(R1+R2)+b_)/nmax, dy = 2.5*Rmax/nmax;
+	for(x = -1.25*R1-0.5*b_; x < 1.25*R2+0.5*b_; x += dx) {
+		for(y = -1.25*Rmax; y < 1.25*Rmax; y += dy) {
+
+			file << get_eps(x,y) << "\t";
+		}
+
+		file << "\n";
+	}
+
+	// close file
+	file.close();
+
 }
 
 

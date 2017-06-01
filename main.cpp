@@ -17,25 +17,22 @@ int main(int argc, char *argv[]){
 	// wounded nucleon vs Saturation model weight
 	double f_wn = atof(argv[3]); // Varies from 0-1
 	
+	// make new nuclei
 	CNucleus *Au = new CNucleus(197);
 	CNucleus *Pb = new CNucleus(207);
 	CNucleus *U = new CNucleus(235);
 
-	Pb->T_test(5,"T_test.dat");
+	printf("%lf\n",Au->get_R());
+	printf("%lf\n",Pb->get_R());
 
-	/* WRITE FIXED TEST AND WRITE EPS TO FILE
-	printf("\n%s\n","-------- GOLD --------");
-	Au->random_test(5);
+	// write thickness of Au to file
+	Au->T_test(100,"T_test.dat");
 
-	printf("\n%s\n","-------- LEAD --------");
-	Pb->random_test(5);
-
-	printf("\n%s\n","-------- URANIUM --------");
-	U->random_test(5);
-	*/
-
-	CPairs *Au_Pb = new CPairs(Au, Pb, 1.0, dEdy, sigma_sat, f_wn);
-	//printf("Energy density = %lf\n", Au_Pb->get_epsilon(0.5,0.5));
+	// make new pair
+	CPairs *Au_Pb = new CPairs(Au, Pb, 0.5, dEdy, sigma_sat, f_wn);
+	
+	// write energy density of pair to file
+	Au_Pb->eps_test(300,"eps_test.dat");
 
 
 
