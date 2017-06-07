@@ -67,7 +67,6 @@ double CNucleus::get_R(){
 	for(r = 0.0; r < R_; r+=dr){
 		A += 4.0*pi*get_rho(r)*r*r*dr;
 	}
-
 	printf("R = %lf, A from integrating = %lf\n", R_, A);
 	*/
 
