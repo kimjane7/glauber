@@ -47,7 +47,7 @@ double CNucleus::get_R(){
 
 		// calculate A(R)
 		A = 0.0;
-		for(r = 0.0; r < R_; r += dr){
+		for(r = 0.0; r < 2.5*R_; r += dr){
 			A += 4.0*pi*get_rho(r)*r*r*dr;
 		}
 
@@ -61,14 +61,12 @@ double CNucleus::get_R(){
 
 	} while(abs(A_-A) > tolerance);
 
-	/* 
 	// check if integrating gives expected nucleon number
 	A = 0.0;
-	for(r = 0.0; r < R_; r+=dr){
+	for(r = 0.0; r < 2.5*R_; r+=dr){
 		A += 4.0*pi*get_rho(r)*r*r*dr;
 	}
 	printf("R = %lf, A from integrating = %lf\n", R_, A);
-	*/
 
 	return R_;
 }
@@ -177,5 +175,12 @@ double CPairs::get_eps(double x, double y) {
 
 	return eps;
 }
+
+/*
+
+print a grid of x,y energy density
+same file format as liam's
+
+*/
 
 #endif

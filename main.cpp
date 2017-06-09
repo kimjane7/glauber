@@ -24,9 +24,9 @@ int main(int argc, char *argv[]){
 	CNucleus *U = new CNucleus(235);
 
 	// print radii
-	printf("Radius of Au-197 = %lf fm\n", Au->get_R());
-	printf("Radius of Pb-207 = %lf fm\n", Pb->get_R());
-	printf("Radius of U-235 = %lf fm\n", U->get_R());
+	//printf("Radius of Au-197 = %lf fm\n", Au->get_R());
+	//printf("Radius of Pb-207 = %lf fm\n", Pb->get_R());
+	//printf("Radius of U-235 = %lf fm\n", U->get_R());
 
 	return 0;
 }
