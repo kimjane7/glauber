@@ -10,8 +10,6 @@ const double pi = 4.0*atan(1.0);
 
 namespace glauber {
 
-namespace glauber {
-
 class CNucleus{
 public:
 	
@@ -198,7 +196,7 @@ double CPairs::get_eps_sat(double x, double y){
 	return eps_sat;
 }
 
-double CPairs::get_eps(double x, double y){
+double CPairs::get_eps(double x, double y) {
 	
 	// calculate weighted average energy density
 	double eps = norm_*(fwn_*get_eps_wn(x,y)+(1.0-fwn_)*get_eps_sat(x,y));
@@ -206,7 +204,7 @@ double CPairs::get_eps(double x, double y){
 	return eps;
 }
 
-void CPairs::print_eps(double min, double max, int nmax){
+void CPairs::print_eps(double min, double max, int nmax) {
 
 	double x, y, dx = (max-min)/nmax, dy = dx;
 
