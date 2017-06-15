@@ -9,6 +9,8 @@
 const double pi = 4.0*atan(1.0);
 using namespace std;
 
+namespace glauber {
+
 class CNucleus{
 public:
 	
@@ -220,5 +222,6 @@ void CPairs::print_eps(double min, double max, int nmax){
 	}
 }
 
+} // glauber
 
 #endif
