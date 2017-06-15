@@ -10,6 +10,8 @@ const double pi = 4.0*atan(1.0);
 
 namespace glauber {
 
+namespace glauber {
+
 class CNucleus{
 public:
 	
