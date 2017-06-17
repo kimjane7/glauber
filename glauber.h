@@ -135,31 +135,47 @@ CPairs::CPairs(CNucleus *N1_set, CNucleus *N2_set, double b_set,
 	sig_sat_ = sig_sat_set;
 	fwn_ = fwn_set;
 
-	printf("%s\n","Normalizing...");
+	// calculate normalization constant
 	norm_ = normalize();
 }
 
 double CPairs::normalize() {
 
-	double x, y, dx = 0.1, dy = dx;
-	double R1, R2, Rmax, eps, sum = 0.0;
+	printf("Normalizing energy density...\n");
 
-	R1 = N1_->get_R();
-	R2 = N2_->get_R();
-	if(R1 >= R2) Rmax = R1;
-	else Rmax = R2; 
+	double x, xmin, xmax, dx = 0.1, y, ymax, dy = dx;
+	double f = 0.005, R1, R2, Rext, eps, sum = 0.0;
 
-	for(y = -1.2*Rmax; y < 1.2*Rmax; y += dy) {
-		for(x = -R2; x < R1; x += dx){
+	// extension to radius such that rho(R_+Rext)=f*rho0;
+	Rext = CNucleus::a_*log((1.0/f)-1.0);
+
+	// find maximum radii to integrate over
+	R1 = N1_->get_R()+Rext;
+	R2 = N2_->get_R()+Rext;
+
+	// calculate upper y-bound
+	ymax = R1*sin(acos((R2*R2-R1*R1-b_*b_)/(2.0*R1*b_)));
+
+	// integrate over half of overlapping region, double the running sum
+	for(y = 0; y < ymax; y += dy) {
+
+		// calculate x-bounds
+		xmin = 0.5*b_-sqrt(R2*R2-y*y);
+		xmax = sqrt(R1*R1-y*y)-0.5*b_;
+
+		// integrate
+		for(x = xmin; x < xmax; x += dx){
+
 			eps = fwn_*get_eps_wn(x,y)+(1.0-fwn_)*get_eps_sat(x,y);
-			sum += eps*dx*dy;
-			printf("sum = %lf\n",sum);
-		}		
+			sum += 2.0*eps*dx*dy;
+		}	
+
+		//printf("sum = %lf\n", sum);	
 	}
 
 	norm_ = 1.0/sum;
 
-	printf("Normalization Constant = %lf\n", norm_);
+	printf("Normalization constant = %lf.\n", norm_);
 
 	return norm_;
 }
@@ -209,6 +225,8 @@ double CPairs::get_eps(double x, double y) {
 
 void CPairs::print_eps(double min, double max, int nmax) {
 
+	printf("%s\n", "Printing energy densities to 'energy_density.dat'...");
+
 	double x, y, dx = (max-min)/nmax, dy = dx;
 
 	// open file
@@ -222,6 +240,8 @@ void CPairs::print_eps(double min, double max, int nmax) {
 		}
 		file << "\n";
 	}
+
+	printf("%s\n", "Done.");
 }
 
 } // glauber
