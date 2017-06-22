@@ -1,0 +1,45 @@
+\documentclass[12pt]{article}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{mathrsfs}
+\usepackage[margin=.5in]{geometry}
+\usepackage{setspace}
+\usepackage{esvect}
+\usepackage{braket}
+\usepackage{tikz}
+\usepackage{braket}
+\usepackage{amsmath, amsthm, amssymb}
+\usepackage[ansinew]{inputenc}
+\newenvironment{psmallmatrix}
+  {\left[\begin{matrix}}
+  {\end{matrix}\right]}
+  
+ 
+\begin{document}
+\noindent The expression $\chi$ is (similar to) the variance between outputs of Liam's code, $\alpha_i$, and Jane's code, $\epsilon_i$. Our goal is to minimize $\chi$, so we want to solve the system: $\frac{\partial \chi}{\partial f} = \frac{\partial \chi}{\partial \sigma} = 0$ for some optimal values of $f_wn$ and $\sigma_{sat}$. We will use Newton's Method. Note: I have abbreviated $f_{wn}$ and $\sigma_{sat}$ as $f$ and $\sigma$. The purpose of this document is to use as a reference while coding. \\
+
+\begin{flalign*}
+&\chi(f,\sigma)  = \sum_i (\alpha_i - \varepsilon_i(f,\sigma))^2 &\\ \\
+&\frac{\partial \chi}{\partial f} (f,\sigma) = -2 \sum_i (\alpha_i - \varepsilon_i(f,\sigma))\left( \frac{\partial \varepsilon_i}{\partial f}(f,\sigma) \right)\\
+&\frac{\partial \chi}{\partial \sigma} (f,\sigma) = -2 \sum_i (\alpha_i - \varepsilon_i(f,\sigma))\left( \frac{\partial \varepsilon_i}{\partial \sigma}(f,\sigma) \right)\\ \\
+&\frac{\partial^2 \chi}{\partial f^2} (f,\sigma) = 2 \sum_i \left( \frac{\partial \varepsilon_i}{\partial f} (f,\sigma) \right)^2\\ 
+&\frac{\partial^2 \chi}{\partial \sigma^2} (f,\sigma) = \sum_i \left[ \left( \frac{\partial \varepsilon_i}{\partial \sigma} (f,\sigma) \right)^2 - (\alpha_i-\varepsilon_i(f,\sigma)) \left( \frac{\partial^2 \varepsilon_i}{\partial \sigma^2} (f,\sigma) \right)\right] \\
+&\frac{\partial^2 \chi}{\partial \sigma \partial f} (f,\sigma)= 2 \sum_i \left[ \left( \frac{\partial \varepsilon_i}{\partial \sigma} (f,\sigma) \right) \left( \frac{\partial \varepsilon_i}{\partial f} (f,\sigma) \right) - (\alpha_i-\varepsilon_i(f,\sigma)) \left( \frac{\partial^2 \varepsilon_i}{\partial \sigma \partial f} (f,\sigma) \right) \right]\\
+&\frac{\partial^2 \chi}{\partial f \partial \sigma} (f,\sigma) = 2 \sum_i \left[ \left( \frac{\partial \varepsilon_i}{\partial f} (f,\sigma) \right) \left( \frac{\partial \varepsilon_i}{\partial \sigma} (f,\sigma) \right) - (\alpha_i-\varepsilon_i(f,\sigma)) \left( \frac{\partial^2 \varepsilon_i}{\partial f \partial \sigma} (f,\sigma) \right) \right]\\ \\ 
+&\varepsilon_i(f,\sigma) = f \varepsilon_{wn_i}(\sigma)+(1-f) \varepsilon_{sat_i}(\sigma)\\ \\
+&\frac{\partial \varepsilon_i}{\partial f} (\sigma) = \varepsilon_{wn_i}(\sigma)-\varepsilon_{sat_i}(\sigma)\\
+&\frac{\partial \varepsilon_i}{\partial \sigma} (f,\sigma) = f \frac{\partial \varepsilon_{wn_i}}{\partial \sigma}(\sigma) + (1-f) \frac{\partial \varepsilon_{sat_i}}{\partial \sigma}(\sigma)\\ \\
+&\frac{\partial^2 \varepsilon_i}{\partial \sigma^2} = f \frac{\partial^2 \varepsilon_{wn_i}}{\partial \sigma^2} (\sigma) + (1-f) \frac{\partial^2 \varepsilon_{sat_i}}{\partial \sigma^2} (\sigma)\\
+&\frac{\partial^2 \varepsilon_i}{\partial \sigma \partial f} = \frac{\partial^2 \varepsilon_i}{\partial f \partial \sigma} = \frac{\partial \varepsilon_{wn_i}}{\partial \sigma} (\sigma) -\frac{\partial \varepsilon_{sat_i}}{\partial \sigma} (\sigma) \\ \\
+\end{flalign*}
+
+\begin{flalign*}
+&\varepsilon_{wn_i} (\sigma) = \frac{N}{2\sigma} \left[ T_{1_i}(1-e^{-T_{2_i}\sigma}) + T_{2_i}(1-e^{-T_{1_i}\sigma}) \right] &\\ \\
+&\frac{\partial \varepsilon_{wn_i}}{\partial \sigma} (\sigma) = \frac{N}{2\sigma} T_{1_i}T_{2_i}(e^{-T_{1_i}\sigma}+e^{-T_{2_i}\sigma})-\frac{N}{2\sigma^2}[T_{1_i}(1-e^{-T2\sigma})+T_{2_i}(1-e^{-T1\sigma})]\\
+&\frac{\partial^2 \varepsilon_{wn_i}}{\partial \sigma^2} (\sigma) = \frac{N}{\sigma^3}[T_{1_i}(1-e^{-T_{2_i}\sigma}) + T_{2_i}(1-e^{-T_{1_i}\sigma})]-\frac{N}{\sigma^2} T_{1_i}T_{2_i}(e^{-T_{1_i}\sigma}+e^{-T_{2_i}\sigma}) - \frac{N}{2\sigma} (T_{1_i}^2T_{2_i}e^{-T_{1_i}\sigma}+T_{1_i}T_{2_i}^2e^{-T_{2_i}\sigma})\\ \\
+&\varepsilon_{sat_i} (\sigma) = \frac{N}{\sigma}T_{min}(1-e^{-T_{max} \sigma})\\ \\
+&\frac{\partial \varepsilon_{sat_i}}{\partial \sigma} (\sigma) = \frac{N}{\sigma} T_{min_i}T_{max_i} e^{-T_{max_i}\sigma} - \frac{N}{\sigma^2} T_{min_i}(1-e^{-T_{max_i}\sigma})\\
+&\frac{\partial^2 \varepsilon_{sat_i}}{\partial \sigma^2} (\sigma) = \frac{2N}{\sigma^3}T_{min_i}(1-e^{-T_{max_i}\sigma}) - \frac{2N}{\sigma^2}T_{min_i}T_{max_i}e^{-T_{max_i}\sigma} - \frac{N}{\sigma} T_{min_i}T_{max_i}^2 e^{-T_{max_i}\sigma}\\
+\end{flalign*}
+
+\end{document}
