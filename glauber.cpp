@@ -73,7 +73,9 @@ namespace glauber {
 	double Nucleus::get_T(double x, double y) {
 
 		// initialize variables
-		double z, z_bound = 2.0*pow(R_*R_-x*x-y*y,0.5), dz = 1.0E-3;
+		double z;
+		double z_bound = 2.0*pow(R_*R_-x*x-y*y,0.5);
+		double dz = 1.0E-3;
 	
 		// integrate the density in the z-direction to get thickness
 		double T=0.0;
@@ -85,7 +87,9 @@ namespace glauber {
 	}
 	
 	NucleusPair::NucleusPair(Nucleus *N1_set, Nucleus *N2_set, double b_set,
-		double min_set, double max_set, int nmax_set) {
+		double min_set, double max_set, int nmax_set) 
+		: params_(2), param_step_(2), Dchi_(2)
+	{
 
 		// set nuclei and impact parameter
 		N1_ = N1_set;
@@ -93,7 +97,6 @@ namespace glauber {
 		b_ = b_set;
 
 		// initialize parameter vector (fwn, sigma_sat)
-		params_.resize(2);
 		params_[0] = 0.5;
 		params_[1] = 42.0;
 
@@ -106,8 +109,6 @@ namespace glauber {
 		nmax_ = nmax_set;
 
 		// resize newton's method increment, partial chi's, jacobian matrix
-		param_step_.resize(2);
-		Dchi_.resize(2);
 		H_.resize(2);
 		for(int i = 0; i < 2; i++) H_[i].resize(2);
 
@@ -238,7 +239,7 @@ namespace glauber {
 			printf("CHECK 1\n");
 			params_[0] += param_step_[0];
 			params_[1] += param_step_[1];
-		} while( (fabs(Dchi_[0]) > tolerance) && (fabs(Dchi_[0]) > tolerance) );
+		} while(false);//while( (fabs(Dchi_[0]) > tolerance) && (fabs(Dchi_[0]) > tolerance) );
 	
 
 		printf("Done.\n");
@@ -301,9 +302,9 @@ namespace glauber {
 	void NucleusPair::fill_step() {
 
 		printf("CHECK 2\n");
-		fill_Dchi();
+		fill_Dchi(); // This is quite time intensive
 		printf("CHECK 3\n");
-		fill_H();
+		fill_H(); // This is even more time intensive
 		printf("CHECK 4\n");
 		param_step_[0] = H_[0][0]*Dchi_[0]+H_[0][1]*Dchi_[1];
 		param_step_[1] = H_[1][0]*Dchi_[0]+H_[1][1]*Dchi_[1];

@@ -1,5 +1,6 @@
 #ifndef GLAUBER_H
 #define GLAUBER_H
+
 #include <cmath>
 #include <cstdlib>
 #include <cstdio>
@@ -37,7 +38,10 @@ public:
 
 	NucleusPair(Nucleus *N1_set, Nucleus *N2_set, double b_set,
 		double min_set, double max_set, int nmax_set);
-	
+
+	void minimize_chi();
+
+private:
 	double normalize();
 	double get_epsilon(double x, double y);
 	double get_epsilon_wn(double x, double y);
@@ -45,13 +49,13 @@ public:
 
 	void print_epsilon();
 	void fetch_liam();
-	void minimize_chi();
+
 	void fill_H();
 	void fill_Dchi();
 	void fill_step();
 
 	double get_chi();
-	double Dchi_Df_wn(); //
+	double Dchi_Df_wn();
 	double Dchi_Dsigma_sat();
 	double D2chi_Df_wn2();
 	double D2chi_Dsigma_sat2();
