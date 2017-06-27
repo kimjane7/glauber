@@ -10,7 +10,7 @@ using matrix = std::vector<std::vector<T>>;
 double* pick_estimate(double f_n, double s_n);
 double* calc_energy(double f_n, double s_n);
 double** jacobian(double f_n, double s_n);
-matrix invert_matrix(matrix M);
+matrix invert_matrix(matrix M1);
 
 template <class Type, std::size_t size>
 void add_arrays(const Type(&a)[size],
