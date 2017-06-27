@@ -2,9 +2,6 @@
 #include <vector>
 #include <iostream>
 
-template<typename T>
-using matrix = std::vector<std::vector<T>>;
-
 double* pick_estimate(double f_n, double s_n)
 {
 
