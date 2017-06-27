@@ -62,7 +62,7 @@ double CNucleus::get_R() {
 
 		//printf("R = %lf\tA = %lf\tA' = %lf\n", R_, A, A_prime);
 
-	} while(abs(A_-A) > tolerance);
+	} while(fabs(A_-A) > tolerance);
 
 	// check if integrating gives expected nucleon number
 	A = 0.0;
