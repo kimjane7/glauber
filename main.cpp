@@ -11,6 +11,11 @@ int main(int argc, char *argv[]){
 	CNucleus *Pb2 = new CNucleus(207);
 
 	// make Pb-Pb nuclei pair with 10.0 fm impact parameter
+<<<<<<< HEAD
+	CPairs *Pb_Pb = new CPairs(Pb1, Pb2, 10.0, -10.0, 10.0, 100);
+
+	Pb_Pb->minimize_chi();
+=======
 	CPairs *Pb_Pb = new CPairs(Pb1, Pb2, 10.0, 40.0, 0.5);
 	Pb_Pb->print_eps(-5.0, 5.0, 100);
 	*/
@@ -28,6 +33,7 @@ int main(int argc, char *argv[]){
 		}
 	}
 	
+>>>>>>> f57d3fd3709d8d82371cb4ab4345de1f31eeb555
 
 	return 0;
 }
