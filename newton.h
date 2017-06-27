@@ -4,10 +4,13 @@
 #include <cstddef> // for size_t
 #include <algorithm> // for transform
 
+template<typename T>
+using matrix = std::vector<std::vector<T>>;
+
 double* pick_estimate(double f_n, double s_n);
 double* calc_energy(double f_n, double s_n);
 double** jacobian(double f_n, double s_n);
-double** invert_matrix(double M[2][2], double J_inverse[2][2]);
+matrix invert_matrix(matrix M);
 
 template <class Type, std::size_t size>
 void add_arrays(const Type(&a)[size],
