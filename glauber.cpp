@@ -3,6 +3,15 @@
 
 namespace glauber {
 
+	CNucleus::CNucleus(int A_set) {
+	
+		// set the nucleon number
+		A_ = A_set;
+
+		// find radius
+		R_ = get_R();
+	}
+	
 	double CNucleus::get_R() {
 
 		double r, dr = 1.0E-3;
@@ -75,12 +84,51 @@ namespace glauber {
 		return T;
 	}
 	
+	CPairs::CPairs(CNucleus *N1_set, CNucleus *N2_set, double b_set,
+		double min_set, double max_set, int nmax_set) {
+
+		// set nuclei and impact parameter
+		N1_ = N1_set;
+		N2_ = N2_set;
+		b_ = b_set;
+
+		// initialize parameter vector (fwn, sigma_sat)
+		params_.resize(2);
+		params_[0] = 0.5;
+		params_[1] = 42.0;
+
+		// calculate normalization constant
+		norm_ = normalize();
+
+		// set x- & y-bounds and number of points for printing
+		min_ = min_set;
+		max_ = max_set;
+		nmax_ = nmax_set;
+
+		// resize newton's method increment, partial chi's, jacobian matrix
+		param_step_.resize(2);
+		Dchi_.resize(2);
+		H_.resize(2);
+		for(int i = 0; i < 2; i++) H_[i].resize(2);
+
+		// resize data matrices to nmax x nmax
+		jane_.resize(nmax_);
+		liam_.resize(nmax_);
+		for(int i = 0; i < nmax_; i++) {
+			jane_[i].resize(nmax_);
+			liam_[i].resize(nmax_);
+		}
+
+		fetch_liam();
+
+	}
+	
 	double CPairs::normalize() {
 
 		printf("Normalizing energy density...\n");
 
 		double x, xmin, xmax, dx = 0.1, y, ymax, dy = dx;
-		double f = 0.005, fwn = params_[0], R1, R2, Rext, eps, sum = 0.0;
+		double f = 0.005, fwn = params_[0], R1, R2, Rext, epsilon, sum = 0.0;
 
 		// extension to radius such that rho(R_+Rext)=f*rho0;
 		Rext = CNucleus::a_*log((1.0/f)-1.0);
@@ -102,8 +150,8 @@ namespace glauber {
 			// integrate
 			for(x = xmin; x < xmax; x += dx){
 
-				eps = fwn*get_epswn(x,y)+(1.0-fwn)*get_epssat(x,y);
-				sum += 2.0*eps*dx*dy;
+				epsilon = fwn*get_epsilon_wn(x,y)+(1.0-fwn)*get_epsilon_sat(x,y);
+				sum += 2.0*epsilon*dx*dy;
 			}	
 
 			//printf("sum = %lf\n", sum);	
@@ -116,23 +164,23 @@ namespace glauber {
 		return norm_;
 	}
 	
-	double CPairs::get_epswn(double x, double y) {
+	double CPairs::get_epsilon_wn(double x, double y) {
 
-		double prefactor, T1, T2, sigsat = params_[1], epswn;
+		double prefactor, T1, T2, sigma_sat = params_[1], epsilon_wn;
 
 		// N1 centered at (-b/2,0) and N2 centered at (b/2,0)
 		T1 = N1_->get_T(x+0.5*b_,y);
 		T2 = N2_->get_T(x-0.5*b_,y);
 
 		// calculate wounded-nucleon energy density
-		epswn = (0.5/sigsat)*(T1*(1.0-exp(-T2*sigsat))+T2*(1.0-exp(-T1*sigsat)));
+		epsilon_wn = (0.5/sigma_sat)*(T1*(1.0-exp(-T2*sigma_sat))+T2*(1.0-exp(-T1*sigma_sat)));
 
-		return epswn;
+		return epsilon_wn;
 	}
 
-	double CPairs::get_epssat(double x, double y) {
+	double CPairs::get_epsilon_sat(double x, double y) {
 
-		double T1, T2, Tmin, Tmax, sigsat = params_[1], epssat;
+		double T1, T2, Tmin, Tmax, sigma_sat = params_[1], epsilon_sat;
 
 		// N1 centered at (-b/2,0) and N2 centered at (b/2,0)
 		T1 = N1_->get_T(x+0.5*b_,y);
@@ -143,19 +191,19 @@ namespace glauber {
 		Tmax = 0.5*(T1+T2);
 
 		// calculate saturation energy density
-		epssat = (1.0/sigsat)*Tmin*(1.0-exp(-Tmax*sigsat));
+		epsilon_sat = (1.0/sigma_sat)*Tmin*(1.0-exp(-Tmax*sigma_sat));
 	
-		return epssat;
+		return epsilon_sat;
 	}
 
-	double CPairs::get_eps(double x, double y) {
+	double CPairs::get_epsilon(double x, double y) {
 	
-		double fwn = params_[0], eps;
+		double fwn = params_[0], epsilon;
 
 		// calculate weighted average energy density
-		eps = norm_*(fwn*get_epswn(x,y)+(1.0-fwn)*get_epssat(x,y));
+		epsilon = norm_*(fwn*get_epsilon_wn(x,y)+(1.0-fwn)*get_epsilon_sat(x,y));
 
-		return eps;
+		return epsilon;
 	}
 	
 	void CPairs::fetch_liam() {
@@ -184,7 +232,7 @@ namespace glauber {
 
 		double tolerance = 1.0E-2;
 		do {
-			print_eps();
+			print_epsilon();
 			printf("Chi = %lf\n",get_chi());
 			fill_step();
 			printf("CHECK 1\n");
@@ -198,11 +246,11 @@ namespace glauber {
 	}
 	
 	// also fetches jane_
-	void CPairs::print_eps() {
+	void CPairs::print_epsilon() {
 
 		printf("%s\n", "Printing energy densities to 'energy_density.dat'...");
 
-		double x, y, dx = (max_-min_)/nmax_, dy = dx, eps;
+		double x, y, dx = (max_-min_)/nmax_, dy = dx, epsilon;
 		int i, j;
 
 		// open file
@@ -214,9 +262,9 @@ namespace glauber {
 			i = trunc((y-min_)/dy);
 			for(x = min_; x < max_; x += dx) {
 				j = trunc((x-min_)/dx);
-				eps = get_eps(x,y);
-				jane_[i][j] = eps;
-				fprintf(fptr, "%lf\t", eps);
+				epsilon = get_epsilon(x,y);
+				jane_[i][j] = epsilon;
+				fprintf(fptr, "%lf\t", epsilon);
 			}
 			fprintf(fptr, "\n");
 		}
@@ -232,9 +280,9 @@ namespace glauber {
 
 		// b = c
 		printf("CHECK 8\n");
-		a = D2chi_Dfwn2();
-		c = D2chi_Dsigsat_Dfwn();
-		d = D2chi_Dsigsat2();
+		a = D2chi_Df_wn2();
+		c = D2chi_Dsigma_sat_Df_wn();
+		d = D2chi_Dsigma_sat2();
 		det = a*d-c*c;
 
 		H_[0][0] = -(1.0/det)*d;
@@ -245,9 +293,9 @@ namespace glauber {
 	void CPairs::fill_Dchi() {
 
 		printf("CHECK 6\n");
-		Dchi_[0] = Dchi_Dfwn();
+		Dchi_[0] = Dchi_Df_wn();
 		printf("CHECK 7\n");
-		Dchi_[1] = Dchi_Dsigsat();
+		Dchi_[1] = Dchi_Dsigma_sat();
 	}
 
 	void CPairs::fill_step() {
@@ -277,9 +325,9 @@ namespace glauber {
 		return chi;
 	}
 	
-	double CPairs::Dchi_Dfwn() {
+	double CPairs::Dchi_Df_wn() {
 
-		double x, y, dx = (max_-min_)/nmax_, dy = dx, Dchi_Dfwn = 0.0;
+		double x, y, dx = (max_-min_)/nmax_, dy = dx, Dchi_Df_wn = 0.0;
 		int i, j;
 
 		// iterate over data points in 'average.dat' and 'energy_density.dat'
@@ -287,17 +335,17 @@ namespace glauber {
 			y = min_+i*dy;
 			for(j = 0; j < nmax_; j++) {
 				x = min_+i*dx;
-				Dchi_Dfwn += -2.0*(liam_[i][j]-jane_[i][j])*Deps_Dfwn(x,y);
-				// printf("Dchi_Dfwn = %lf\n",Dchi_Dfwn);
+				Dchi_Df_wn += -2.0*(liam_[i][j]-jane_[i][j])*Depsilon_Df_wn(x,y);
+				// printf("Dchi_Df_wn = %lf\n",Dchi_Df_wn);
 			}
 		}
 
-		return Dchi_Dfwn;
+		return Dchi_Df_wn;
 	}
 
-	double CPairs::Dchi_Dsigsat() {
+	double CPairs::Dchi_Dsigma_sat() {
 
-		double x, y, dx = (max_-min_)/nmax_, dy = dx, Dchi_Dsigsat = 0.0;
+		double x, y, dx = (max_-min_)/nmax_, dy = dx, Dchi_Dsigma_sat = 0.0;
 		int i, j;
 
 		// iterate over data points in 'average.dat' and 'energy_density.dat'
@@ -305,30 +353,30 @@ namespace glauber {
 			y = min_+i*dy;
 			for(j = 0; j < nmax_; j++) {
 				x = min_+i*dx;
-				Dchi_Dsigsat += -2.0*(liam_[i][j]-jane_[i][j])*Deps_Dsigsat(x,y);
-				// printf("Dchi_Dsigsat = %lf\n",Dchi_Dsigsat);
+				Dchi_Dsigma_sat += -2.0*(liam_[i][j]-jane_[i][j])*Depsilon_Dsigma_sat(x,y);
+				// printf("Dchi_Dsigma_sat = %lf\n",Dchi_Dsigma_sat);
 			}
 		}
 
-		return Dchi_Dsigsat;
+		return Dchi_Dsigma_sat;
 	}
 
-	double CPairs::D2chi_Dfwn2() { 
+	double CPairs::D2chi_Df_wn2() { 
 
-		double x, y, dx = (max_-min_)/nmax_, dy = dx, D2chi_Dfwn2 = 0.0;
+		double x, y, dx = (max_-min_)/nmax_, dy = dx, D2chi_Df_wn2 = 0.0;
 
 		for(y = min_; y < max_; y += dy) {
 			for(x = min_; x < max_; x += dx) {
-				D2chi_Dfwn2 += 2.0*pow(Deps_Dfwn(x,y),2.0);
+				D2chi_Df_wn2 += 2.0*pow(Depsilon_Df_wn(x,y),2.0);
 			}
 		}
 
-		return D2chi_Dfwn2;
+		return D2chi_Df_wn2;
 	}
 
-	double CPairs::D2chi_Dsigsat2() {
+	double CPairs::D2chi_Dsigma_sat2() {
 
-		double x, y, dx = (max_-min_)/nmax_, dy = dx, D2chi_Dsigsat2 = 0.0;
+		double x, y, dx = (max_-min_)/nmax_, dy = dx, D2chi_Dsigma_sat2 = 0.0;
 		int i, j;
 
 		// iterate over data points in 'average.dat' and 'energy_density.dat'
@@ -336,17 +384,18 @@ namespace glauber {
 			y = min_+i*dy;
 			for(j = 0; j < nmax_; j++) {
 				x = min_+i*dx;
-				D2chi_Dsigsat2 += 2.0*(pow(Deps_Dsigsat(x,y),2.0)-(liam_[i][j]-jane_[i][j])*D2eps_Dsigsat_Dfwn(x,y));		
+				D2chi_Dsigma_sat2 += 2.0*(pow(Depsilon_Dsigma_sat(x,y),2.0) -
+					(liam_[i][j]-jane_[i][j])*D2epsilon_Dsigma_sat_Df_wn(x,y));		
 			}
 		}
 
-		return D2chi_Dsigsat2;
+		return D2chi_Dsigma_sat2;
 	}
 
-	// same as D2chi_Dfwn_Dsigsat
-	double CPairs::D2chi_Dsigsat_Dfwn() { 
+	// same as D2chi_Dfwn_Dsigma_sat
+	double CPairs::D2chi_Dsigma_sat_Df_wn() { 
 
-		double x, y, dx = (max_-min_)/nmax_, dy = dx, D2chi_Dsigsat_Dfwn = 0.0;
+		double x, y, dx = (max_-min_)/nmax_, dy = dx, D2chi_Dsigma_sat_Df_wn = 0.0;
 		int i, j;
 
 		// iterate over data points in 'average.dat' and 'energy_density.dat'
@@ -354,78 +403,78 @@ namespace glauber {
 			y = min_+i*dy;
 			for(j = 0; j < nmax_; j++) {
 				x = min_+i*dx;
-				D2chi_Dsigsat_Dfwn += 2.0*(Deps_Dfwn(x,y)*Deps_Dsigsat(x,y)-(liam_[i][j]-jane_[i][j])*D2eps_Dsigsat_Dfwn(x,y));		
+				D2chi_Dsigma_sat_Df_wn += 2.0*(Depsilon_Df_wn(x,y)*Depsilon_Dsigma_sat(x,y)-(liam_[i][j]-jane_[i][j])*D2epsilon_Dsigma_sat_Df_wn(x,y));		
 			}
 		}
 
-		return D2chi_Dsigsat_Dfwn;
+		return D2chi_Dsigma_sat_Df_wn;
 	}
 
-	double CPairs::Deps_Dfwn(double x, double y) {
+	double CPairs::Depsilon_Df_wn(double x, double y) {
 
-		double Deps_Dfwn = get_epswn(x,y)-get_epssat(x,y);
+		double Depsilon_Dfwn = get_epsilon_wn(x,y)-get_epsilon_sat(x,y);
 
-		return Deps_Dfwn;
+		return Depsilon_Dfwn;
 	}
 
-	double CPairs::Deps_Dsigsat(double x, double y) {
+	double CPairs::Depsilon_Dsigma_sat(double x, double y) {
 
-		double fwn = params_[0], Deps_Dsigsat;
+		double fwn = params_[0], Depsilon_Dsigma_sat;
 
-		Deps_Dsigsat = fwn*Depswn_Dsigsat(x,y)+(1-fwn)*Depssat_Dsigsat(x,y);
+		Depsilon_Dsigma_sat = fwn*Depsilon_wn_Dsigma_sat(x,y)+(1-fwn)*Depsilon_sat_Dsigma_sat(x,y);
 
-		return Deps_Dsigsat;
+		return Depsilon_Dsigma_sat;
 	}
 
-	double CPairs::D2eps_Dsigsat2(double x, double y) {
+	double CPairs::D2epsilon_Dsigma_sat2(double x, double y) {
 
-		double fwn = params_[0], D2eps_Dsigsat2;
+		double fwn = params_[0], D2epsilon_Dsigma_sat2;
 
-		D2eps_Dsigsat2 = fwn*D2epswn_Dsigsat2(x,y)+(1-fwn)*D2epssat_Dsigsat2(x,y);
+		D2epsilon_Dsigma_sat2 = fwn*D2epsilon_wn_Dsigma_sat2(x,y)+(1-fwn)*D2epsilon_sat_Dsigma_sat2(x,y);
 
-		return D2eps_Dsigsat2;
+		return D2epsilon_Dsigma_sat2;
 	}
 
-	// same as D2eps_Dfwn_Dsigsat
-	double CPairs::D2eps_Dsigsat_Dfwn(double x, double y) {
+	// same as D2epsilon_Df_wn_Dsigma_sat
+	double CPairs::D2epsilon_Dsigma_sat_Df_wn(double x, double y) {
 
-		double D2eps_Dsigsat_Dfwn = Depswn_Dsigsat(x,y)-Depssat_Dsigsat(x,y);
+		double D2epsilon_Dsigma_sat_Df_wn = Depsilon_wn_Dsigma_sat(x,y)-Depsilon_sat_Dsigma_sat(x,y);
 
-		return D2eps_Dsigsat_Dfwn;
+		return D2epsilon_Dsigma_sat_Df_wn;
 	}
 
-	double CPairs::Depswn_Dsigsat(double x, double y) {
+	double CPairs::Depsilon_wn_Dsigma_sat(double x, double y) {
 
-		double T1, T2, sigsat = params_[1], Depswn_Dsigsat;
+		double T1, T2, sigma_sat = params_[1], Depsilon_wn_Dsigma_sat;
 
 		T1 = N1_->get_T(x+0.5*b_,y);
 		T2 = N2_->get_T(x-0.5*b_,y);
 
-		Depswn_Dsigsat = (0.5*norm_/sigsat)*T1*T2*(exp(-T1*sigsat)+exp(-T2*sigsat));
-		Depswn_Dsigsat += -(0.5*norm_*T1/(sigsat*sigsat))*(1.0-exp(-T2*sigsat));
-		Depswn_Dsigsat += -(0.5*norm_*T2/(sigsat*sigsat))*(1.0-exp(-T1*sigsat));
+		Depsilon_wn_Dsigma_sat = (0.5*norm_/sigma_sat)*T1*T2*(exp(-T1*sigma_sat)+exp(-T2*sigma_sat));
+		Depsilon_wn_Dsigma_sat += -(0.5*norm_*T1/(sigma_sat*sigma_sat))*(1.0-exp(-T2*sigma_sat));
+		Depsilon_wn_Dsigma_sat += -(0.5*norm_*T2/(sigma_sat*sigma_sat))*(1.0-exp(-T1*sigma_sat));
 
-		return Depswn_Dsigsat;
+		return Depsilon_wn_Dsigma_sat;
 	}
 
-	double CPairs::D2epswn_Dsigsat2(double x, double y) {
+	double CPairs::D2epsilon_wn_Dsigma_sat2(double x, double y) {
 
-		double T1, T2, sigsat = params_[1], D2epswn_Dsigsat2;
+		double T1, T2, sigma_sat = params_[1], D2epsilon_wn_Dsigma_sat2;
 
 		T1 = N1_->get_T(x+0.5*b_,y);
 		T2 = N2_->get_T(x-0.5*b_,y);
 
-		D2epswn_Dsigsat2 = (norm_*T1/pow(sigsat,3.0))*(1.0-exp(-T2*sigsat));
-		D2epswn_Dsigsat2 += (norm_*T2/pow(sigsat,3.0))*(1.0-exp(-T1*sigsat));
-		D2epswn_Dsigsat2 += (norm_*T1*T2/(sigsat*sigsat))*(exp(-T1*sigsat)+exp(-T2*sigsat));
-		D2epswn_Dsigsat2 += -(0.5*norm_*T1*T2/sigsat)*(T1*exp(-T1*sigsat)+T2*exp(-T2*sigsat));
+		D2epsilon_wn_Dsigma_sat2 = (norm_*T1/pow(sigma_sat,3.0))*(1.0-exp(-T2*sigma_sat));
+		D2epsilon_wn_Dsigma_sat2 += (norm_*T2/pow(sigma_sat,3.0))*(1.0-exp(-T1*sigma_sat));
+		D2epsilon_wn_Dsigma_sat2 += (norm_*T1*T2/(sigma_sat*sigma_sat))*(exp(-T1*sigma_sat)+exp(-T2*sigma_sat));
+		D2epsilon_wn_Dsigma_sat2 += -(0.5*norm_*T1*T2/sigma_sat)*(T1*exp(-T1*sigma_sat)+T2*exp(-T2*sigma_sat));
 
-		return D2epswn_Dsigsat2;
+		return D2epsilon_wn_Dsigma_sat2;
 	}
 
-	double CPairs::Depssat_Dsigsat(double x, double y) {
+	double CPairs::Depsilon_sat_Dsigma_sat(double x, double y) {
 
-		double T1, T2, Tmin, Tmax, sigsat = params_[1], Depssat_Dsigsat;
+		double T1, T2, Tmin, Tmax, sigma_sat = params_[1], Depsilon_sat_Dsigma_sat;
 
 		// N1 centered at (-b/2,0) and N2 centered at (b/2,0)
 		T1 = N1_->get_T(x+0.5*b_,y);
@@ -435,15 +484,15 @@ namespace glauber {
 		else Tmin = 2.0*T1*T2/(T1+T2);
 		Tmax = 0.5*(T1+T2);
 
-		Depssat_Dsigsat = (norm_/sigsat)*Tmin*Tmax*exp(-Tmax*sigsat);
-		Depssat_Dsigsat += -(norm_/(sigsat*sigsat))*Tmin*(1.0-exp(-Tmax*sigsat));
+		Depsilon_sat_Dsigma_sat = (norm_/sigma_sat)*Tmin*Tmax*exp(-Tmax*sigma_sat);
+		Depsilon_sat_Dsigma_sat += -(norm_/(sigma_sat*sigma_sat))*Tmin*(1.0-exp(-Tmax*sigma_sat));
 
-		return Depssat_Dsigsat;
+		return Depsilon_sat_Dsigma_sat;
 	}
 
-	double CPairs::D2epssat_Dsigsat2(double x, double y) {
+	double CPairs::D2epsilon_sat_Dsigma_sat2(double x, double y) {
 	
-		double T1, T2, Tmin, Tmax, sigsat = params_[1], D2epssat_Dsigsat2;
+		double T1, T2, Tmin, Tmax, sigma_sat = params_[1], D2epsilon_sat_Dsigma_sat2;
 
 		// N1 centered at (-b/2,0) and N2 centered at (b/2,0)
 		T1 = N1_->get_T(x+0.5*b_,y);
@@ -453,11 +502,11 @@ namespace glauber {
 		else Tmin = 2.0*T1*T2/(T1+T2);
 		Tmax = 0.5*(T1+T2);
 
-		D2epssat_Dsigsat2 = (2.0*norm_*Tmin/pow(sigsat,3.0))*(1.0-exp(-Tmax*sigsat));
-		D2epssat_Dsigsat2 += -(2.0*norm_*Tmin*Tmax/(sigsat*sigsat))*exp(-Tmax*sigsat);
-		D2epssat_Dsigsat2 += -(norm_*Tmin*Tmax*Tmax/sigsat)*exp(-Tmax*sigsat);
+		D2epsilon_sat_Dsigma_sat2 = (2.0*norm_*Tmin/pow(sigma_sat,3.0))*(1.0-exp(-Tmax*sigma_sat));
+		D2epsilon_sat_Dsigma_sat2 += -(2.0*norm_*Tmin*Tmax/(sigma_sat*sigma_sat))*exp(-Tmax*sigma_sat);
+		D2epsilon_sat_Dsigma_sat2 += -(norm_*Tmin*Tmax*Tmax/sigma_sat)*exp(-Tmax*sigma_sat);
 
-		return D2epssat_Dsigsat2;
+		return D2epsilon_sat_Dsigma_sat2;
 	}
 
 } //glauber

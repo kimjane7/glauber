@@ -25,15 +25,6 @@ public:
 
 };
 
-CNucleus::CNucleus(int A_set) {
-	
-	// set the nucleon number
-	A_ = A_set;
-
-	// find radius
-	R_ = get_R();
-}
-
 class CPairs {
 public:
 	
@@ -46,12 +37,13 @@ public:
 
 	CPairs(CNucleus *N1_set, CNucleus *N2_set, double b_set,
 		double min_set, double max_set, int nmax_set);
+	
 	double normalize();
-	double get_eps(double x, double y);
-	double get_epswn(double x, double y);
-	double get_epssat(double x, double y);
+	double get_epsilon(double x, double y);
+	double get_epsilon_wn(double x, double y);
+	double get_epsilon_sat(double x, double y);
 
-	void print_eps();
+	void print_epsilon();
 	void fetch_liam();
 	void minimize_chi();
 	void fill_H();
@@ -59,64 +51,25 @@ public:
 	void fill_step();
 
 	double get_chi();
-	double Dchi_Dfwn();
-	double Dchi_Dsigsat();
-	double D2chi_Dfwn2();
-	double D2chi_Dsigsat2();
-	double D2chi_Dsigsat_Dfwn();
-	double D2chi_Dfwn_Dsigsat();
+	double Dchi_Df_wn(); //
+	double Dchi_Dsigma_sat();
+	double D2chi_Df_wn2();
+	double D2chi_Dsigma_sat2();
+	double D2chi_Dsigma_sat_Df_wn();
+	double D2chi_Df_wn_Dsigma_sat();
 
-	double Deps_Dfwn(double x, double y);
-	double Deps_Dsigsat(double x, double y);
-	double D2eps_Dsigsat2(double x, double y);
-	double D2eps_Dsigsat_Dfwn(double x, double y);
+	double Depsilon_Df_wn(double x, double y);
+	double Depsilon_Dsigma_sat(double x, double y);
+	double D2epsilon_Dsigma_sat2(double x, double y);
+	double D2epsilon_Dsigma_sat_Df_wn(double x, double y);
 
-	double Depswn_Dsigsat(double x, double y);
-	double D2epswn_Dsigsat2(double x, double y);
+	double Depsilon_wn_Dsigma_sat(double x, double y);
+	double D2epsilon_wn_Dsigma_sat2(double x, double y);
 
-	double Depssat_Dsigsat(double x, double y);
-	double D2epssat_Dsigsat2(double x, double y);
+	double Depsilon_sat_Dsigma_sat(double x, double y);
+	double D2epsilon_sat_Dsigma_sat2(double x, double y);
 
 };
-
-CPairs::CPairs(CNucleus *N1_set, CNucleus *N2_set, double b_set,
-	double min_set, double max_set, int nmax_set) {
-
-	// set nucleii and impact parameter
-	N1_ = N1_set;
-	N2_ = N2_set;
-	b_ = b_set;
-
-	// initialize parameter vector (fwn, sig_sat)
-	params_.resize(2);
-	params_[0] = 0.5;
-	params_[1] = 42.0;
-
-	// calculate normalization constant
-	norm_ = normalize();
-
-	// set x- & y-bounds and number of points for printing
-	min_ = min_set;
-	max_ = max_set;
-	nmax_ = nmax_set;
-
-	// resize newton's method increment, partial chi's, jacobian matrix
-	param_step_.resize(2);
-	Dchi_.resize(2);
-	H_.resize(2);
-	for(int i = 0; i < 2; i++) H_[i].resize(2);
-
-	// resize data matrices to nmax x nmax
-	jane_.resize(nmax_);
-	liam_.resize(nmax_);
-	for(int i = 0; i < nmax_; i++) {
-		jane_[i].resize(nmax_);
-		liam_[i].resize(nmax_);
-	}
-
-	fetch_liam();
-
-}
 
 } // glauber
 
