@@ -3,45 +3,45 @@
 
 namespace glauber {
 
-	CNucleus::CNucleus(int A_set) {
+	Nucleus::Nucleus(int A_set) {
 	
-		// set the nucleon number
+		// Set the nucleon number
 		A_ = A_set;
 
-		// find radius
+		// Set the Radius
 		R_ = get_R();
 	}
 	
-	double CNucleus::get_R() {
+	double Nucleus::get_R() {
 
 		double r, dr = 1.0E-3;
 		double A, A_prime;
 		double tolerance = 0.1;
 
-		// estimate R of uniform spherical nucleus
+		// Estimate R of uniform spherical nucleus
 		R_ = pow(3.0*A_/(4.0*pi*rho0_), 1.0/3.0);
 
-		// perform Newton's method to find R s.t. A(R)=A_
+		// Perform Newton's method to find R s.t. A(R)=A_
 		do {
 
-			// calculate A(R)
+			// Calculate A(R)
 			A = 0.0;
 			for(r = 0.0; r < 2.5*R_; r += dr) {
 				A += 4.0*pi*get_rho(r)*r*r*dr;
 			}
 
-			// calculate A'(R)
+			// Calculate A'(R)
 			A_prime = 4.0*pi*rho0_*R_*R_;
 		
 
-			// update radius estimate
+			// Update radius estimate
 			R_ += (A_-A)/A_prime;
 
 			//printf("R = %lf\tA = %lf\tA' = %lf\n", R_, A, A_prime);
 
 		} while(fabs(A_-A) > tolerance);
 
-		// check if integrating gives expected nucleon number
+		// Check if integrating gives expected nucleon number
 		A = 0.0;
 		for(r = 0.0; r < 2.5*R_; r+=dr) {
 			A += 4.0*pi*get_rho(r)*r*r*dr;
@@ -51,15 +51,15 @@ namespace glauber {
 		return R_;
 	}
 	
-	double CNucleus::get_rho(double r) {
+	double Nucleus::get_rho(double r) {
 
-		// calculate Woods-Saxon density
+		// Calculate Woods-Saxon density
 		double rho = rho0_/(1.0+exp((r-R_)/a_));
 
 		return rho;
 	}
 
-	double CNucleus::get_rho(double x, double y, double z) {
+	double Nucleus::get_rho(double x, double y, double z) {
 	
 		// calculate distance from center of nucleus
 		double r = pow(x*x+y*y+z*z,0.5);
@@ -70,10 +70,12 @@ namespace glauber {
 		return rho;
 	}
 
-	double CNucleus::get_T(double x, double y) {
+	double Nucleus::get_T(double x, double y) {
 
 		// initialize variables
-		double z, z_bound = 2.0*pow(R_*R_-x*x-y*y,0.5), dz = 1.0E-3;
+		double z;
+		double z_bound = 2.0*pow(R_*R_-x*x-y*y,0.5);
+		double dz = 1.0E-3;
 	
 		// integrate the density in the z-direction to get thickness
 		double T=0.0;
@@ -84,8 +86,10 @@ namespace glauber {
 		return T;
 	}
 	
-	CPairs::CPairs(CNucleus *N1_set, CNucleus *N2_set, double b_set,
-		double min_set, double max_set, int nmax_set) {
+	NucleusPair::NucleusPair(Nucleus *N1_set, Nucleus *N2_set, double b_set,
+		double min_set, double max_set, int nmax_set) 
+		: params_(2), param_step_(2), Dchi_(2)
+	{
 
 		// set nuclei and impact parameter
 		N1_ = N1_set;
@@ -93,7 +97,6 @@ namespace glauber {
 		b_ = b_set;
 
 		// initialize parameter vector (fwn, sigma_sat)
-		params_.resize(2);
 		params_[0] = 0.5;
 		params_[1] = 42.0;
 
@@ -106,8 +109,6 @@ namespace glauber {
 		nmax_ = nmax_set;
 
 		// resize newton's method increment, partial chi's, jacobian matrix
-		param_step_.resize(2);
-		Dchi_.resize(2);
 		H_.resize(2);
 		for(int i = 0; i < 2; i++) H_[i].resize(2);
 
@@ -123,7 +124,7 @@ namespace glauber {
 
 	}
 	
-	double CPairs::normalize() {
+	double NucleusPair::normalize() {
 
 		printf("Normalizing energy density...\n");
 
@@ -131,7 +132,7 @@ namespace glauber {
 		double f = 0.005, fwn = params_[0], R1, R2, Rext, epsilon, sum = 0.0;
 
 		// extension to radius such that rho(R_+Rext)=f*rho0;
-		Rext = CNucleus::a_*log((1.0/f)-1.0);
+		Rext = Nucleus::a_*log((1.0/f)-1.0);
 
 		// find maximum radii to integrate over
 		R1 = N1_->get_R()+Rext;
@@ -164,7 +165,7 @@ namespace glauber {
 		return norm_;
 	}
 	
-	double CPairs::get_epsilon_wn(double x, double y) {
+	double NucleusPair::get_epsilon_wn(double x, double y) {
 
 		double prefactor, T1, T2, sigma_sat = params_[1], epsilon_wn;
 
@@ -178,7 +179,7 @@ namespace glauber {
 		return epsilon_wn;
 	}
 
-	double CPairs::get_epsilon_sat(double x, double y) {
+	double NucleusPair::get_epsilon_sat(double x, double y) {
 
 		double T1, T2, Tmin, Tmax, sigma_sat = params_[1], epsilon_sat;
 
@@ -196,7 +197,7 @@ namespace glauber {
 		return epsilon_sat;
 	}
 
-	double CPairs::get_epsilon(double x, double y) {
+	double NucleusPair::get_epsilon(double x, double y) {
 	
 		double fwn = params_[0], epsilon;
 
@@ -206,7 +207,7 @@ namespace glauber {
 		return epsilon;
 	}
 	
-	void CPairs::fetch_liam() {
+	void NucleusPair::fetch_liam() {
 
 		printf("%s\n", "Fetching data from 'average.dat'...");
 
@@ -226,7 +227,7 @@ namespace glauber {
 		printf("Done.\n");
 	}
 
-	void CPairs::minimize_chi() {
+	void NucleusPair::minimize_chi() {
 
 		printf("%s\n", "Minimizing chi...");
 
@@ -238,7 +239,7 @@ namespace glauber {
 			printf("CHECK 1\n");
 			params_[0] += param_step_[0];
 			params_[1] += param_step_[1];
-		} while( (fabs(Dchi_[0]) > tolerance) && (fabs(Dchi_[0]) > tolerance) );
+		} while(false);//while( (fabs(Dchi_[0]) > tolerance) && (fabs(Dchi_[0]) > tolerance) );
 	
 
 		printf("Done.\n");
@@ -246,7 +247,7 @@ namespace glauber {
 	}
 	
 	// also fetches jane_
-	void CPairs::print_epsilon() {
+	void NucleusPair::print_epsilon() {
 
 		printf("%s\n", "Printing energy densities to 'energy_density.dat'...");
 
@@ -274,7 +275,7 @@ namespace glauber {
 	}
 
 	// H is the negative inverse of the Hessian of chi
-	void CPairs::fill_H() { 
+	void NucleusPair::fill_H() { 
 
 		double a, c, d, det;
 
@@ -290,7 +291,7 @@ namespace glauber {
 		H_[1][1] = -(1.0/det)*a;
 	}
 
-	void CPairs::fill_Dchi() {
+	void NucleusPair::fill_Dchi() {
 
 		printf("CHECK 6\n");
 		Dchi_[0] = Dchi_Df_wn();
@@ -298,19 +299,19 @@ namespace glauber {
 		Dchi_[1] = Dchi_Dsigma_sat();
 	}
 
-	void CPairs::fill_step() {
+	void NucleusPair::fill_step() {
 
 		printf("CHECK 2\n");
-		fill_Dchi();
+		fill_Dchi(); // This is quite time intensive
 		printf("CHECK 3\n");
-		fill_H();
+		fill_H(); // This is even more time intensive
 		printf("CHECK 4\n");
 		param_step_[0] = H_[0][0]*Dchi_[0]+H_[0][1]*Dchi_[1];
 		param_step_[1] = H_[1][0]*Dchi_[0]+H_[1][1]*Dchi_[1];
 		printf("CHECK 5\n");
 	}
 
-	double CPairs::get_chi() {
+	double NucleusPair::get_chi() {
 
 		double chi = 0.0;
 		int i, j;
@@ -325,7 +326,7 @@ namespace glauber {
 		return chi;
 	}
 	
-	double CPairs::Dchi_Df_wn() {
+	double NucleusPair::Dchi_Df_wn() {
 
 		double x, y, dx = (max_-min_)/nmax_, dy = dx, Dchi_Df_wn = 0.0;
 		int i, j;
@@ -343,7 +344,7 @@ namespace glauber {
 		return Dchi_Df_wn;
 	}
 
-	double CPairs::Dchi_Dsigma_sat() {
+	double NucleusPair::Dchi_Dsigma_sat() {
 
 		double x, y, dx = (max_-min_)/nmax_, dy = dx, Dchi_Dsigma_sat = 0.0;
 		int i, j;
@@ -361,7 +362,7 @@ namespace glauber {
 		return Dchi_Dsigma_sat;
 	}
 
-	double CPairs::D2chi_Df_wn2() { 
+	double NucleusPair::D2chi_Df_wn2() { 
 
 		double x, y, dx = (max_-min_)/nmax_, dy = dx, D2chi_Df_wn2 = 0.0;
 
@@ -374,7 +375,7 @@ namespace glauber {
 		return D2chi_Df_wn2;
 	}
 
-	double CPairs::D2chi_Dsigma_sat2() {
+	double NucleusPair::D2chi_Dsigma_sat2() {
 
 		double x, y, dx = (max_-min_)/nmax_, dy = dx, D2chi_Dsigma_sat2 = 0.0;
 		int i, j;
@@ -393,7 +394,7 @@ namespace glauber {
 	}
 
 	// same as D2chi_Dfwn_Dsigma_sat
-	double CPairs::D2chi_Dsigma_sat_Df_wn() { 
+	double NucleusPair::D2chi_Dsigma_sat_Df_wn() { 
 
 		double x, y, dx = (max_-min_)/nmax_, dy = dx, D2chi_Dsigma_sat_Df_wn = 0.0;
 		int i, j;
@@ -410,14 +411,14 @@ namespace glauber {
 		return D2chi_Dsigma_sat_Df_wn;
 	}
 
-	double CPairs::Depsilon_Df_wn(double x, double y) {
+	double NucleusPair::Depsilon_Df_wn(double x, double y) {
 
 		double Depsilon_Dfwn = get_epsilon_wn(x,y)-get_epsilon_sat(x,y);
 
 		return Depsilon_Dfwn;
 	}
 
-	double CPairs::Depsilon_Dsigma_sat(double x, double y) {
+	double NucleusPair::Depsilon_Dsigma_sat(double x, double y) {
 
 		double fwn = params_[0], Depsilon_Dsigma_sat;
 
@@ -426,7 +427,7 @@ namespace glauber {
 		return Depsilon_Dsigma_sat;
 	}
 
-	double CPairs::D2epsilon_Dsigma_sat2(double x, double y) {
+	double NucleusPair::D2epsilon_Dsigma_sat2(double x, double y) {
 
 		double fwn = params_[0], D2epsilon_Dsigma_sat2;
 
@@ -436,14 +437,14 @@ namespace glauber {
 	}
 
 	// same as D2epsilon_Df_wn_Dsigma_sat
-	double CPairs::D2epsilon_Dsigma_sat_Df_wn(double x, double y) {
+	double NucleusPair::D2epsilon_Dsigma_sat_Df_wn(double x, double y) {
 
 		double D2epsilon_Dsigma_sat_Df_wn = Depsilon_wn_Dsigma_sat(x,y)-Depsilon_sat_Dsigma_sat(x,y);
 
 		return D2epsilon_Dsigma_sat_Df_wn;
 	}
 
-	double CPairs::Depsilon_wn_Dsigma_sat(double x, double y) {
+	double NucleusPair::Depsilon_wn_Dsigma_sat(double x, double y) {
 
 		double T1, T2, sigma_sat = params_[1], Depsilon_wn_Dsigma_sat;
 
@@ -457,7 +458,7 @@ namespace glauber {
 		return Depsilon_wn_Dsigma_sat;
 	}
 
-	double CPairs::D2epsilon_wn_Dsigma_sat2(double x, double y) {
+	double NucleusPair::D2epsilon_wn_Dsigma_sat2(double x, double y) {
 
 		double T1, T2, sigma_sat = params_[1], D2epsilon_wn_Dsigma_sat2;
 
@@ -472,7 +473,7 @@ namespace glauber {
 		return D2epsilon_wn_Dsigma_sat2;
 	}
 
-	double CPairs::Depsilon_sat_Dsigma_sat(double x, double y) {
+	double NucleusPair::Depsilon_sat_Dsigma_sat(double x, double y) {
 
 		double T1, T2, Tmin, Tmax, sigma_sat = params_[1], Depsilon_sat_Dsigma_sat;
 
@@ -490,7 +491,7 @@ namespace glauber {
 		return Depsilon_sat_Dsigma_sat;
 	}
 
-	double CPairs::D2epsilon_sat_Dsigma_sat2(double x, double y) {
+	double NucleusPair::D2epsilon_sat_Dsigma_sat2(double x, double y) {
 	
 		double T1, T2, Tmin, Tmax, sigma_sat = params_[1], D2epsilon_sat_Dsigma_sat2;
 

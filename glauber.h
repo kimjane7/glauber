@@ -1,5 +1,6 @@
 #ifndef GLAUBER_H
 #define GLAUBER_H
+
 #include <cmath>
 #include <cstdlib>
 #include <cstdio>
@@ -9,7 +10,7 @@ const double pi = 4.0*atan(1.0);
 
 namespace glauber {
 
-class CNucleus {
+class Nucleus {
 public:
 	
 	constexpr static double a_ = 0.546; // only constexpr, const enum, and const int values
@@ -17,7 +18,7 @@ public:
 	double R_;
 	int A_;
 
-	CNucleus(int Aset);
+	Nucleus(int Aset);
 	double get_R();
 	double get_rho(double r);
 	double get_rho(double x, double y, double z);
@@ -25,19 +26,22 @@ public:
 
 };
 
-class CPairs {
+class NucleusPair {
 public:
 	
-	CNucleus *N1_, *N2_;
+	Nucleus *N1_, *N2_;
 	int nmax_;
 	double norm_, b_, min_, max_;
 
 	std::vector<double> params_, param_step_, Dchi_;
 	std::vector<std::vector<double>> liam_, jane_, H_;
 
-	CPairs(CNucleus *N1_set, CNucleus *N2_set, double b_set,
+	NucleusPair(Nucleus *N1_set, Nucleus *N2_set, double b_set,
 		double min_set, double max_set, int nmax_set);
-	
+
+	void minimize_chi();
+
+private:
 	double normalize();
 	double get_epsilon(double x, double y);
 	double get_epsilon_wn(double x, double y);
@@ -45,13 +49,13 @@ public:
 
 	void print_epsilon();
 	void fetch_liam();
-	void minimize_chi();
+
 	void fill_H();
 	void fill_Dchi();
 	void fill_step();
 
 	double get_chi();
-	double Dchi_Df_wn(); //
+	double Dchi_Df_wn();
 	double Dchi_Dsigma_sat();
 	double D2chi_Df_wn2();
 	double D2chi_Dsigma_sat2();

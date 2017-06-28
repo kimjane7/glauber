@@ -1,7 +1,6 @@
-from mpl_toolkits.mplot3d import Axes3D
+#from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 import matplotlib.pyplot as plt 
-from matplotlib.ticker import ScalarFormatter, FormatStrFormatter
 import numpy as np
 import os
 
@@ -37,4 +36,4 @@ T.get_yaxis().set_visible(False)
 #plt.clabel(T_lines, inline=1, fontsize=10, manual=True)
 
 plt.savefig('energy_density.pdf',format='pdf')
-os.system('okular energy_density.pdf')
+os.system('open energy_density.pdf')
