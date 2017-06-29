@@ -234,12 +234,11 @@ namespace glauber {
 		double tolerance = 1.0E-2;
 		do {
 			print_epsilon();
-			printf("Chi = %lf\n",get_chi());
+			printf("Chi = %lf\tfwn = %lf\tsigsat = %lf\n",get_chi(),params_[0],params_[1]);
 			fill_step();
-			printf("CHECK 1\n");
 			params_[0] += param_step_[0];
 			params_[1] += param_step_[1];
-		} while(false);//while( (fabs(Dchi_[0]) > tolerance) && (fabs(Dchi_[0]) > tolerance) );
+		} while((fabs(Dchi_[0]) > tolerance) && (fabs(Dchi_[0]) > tolerance));
 	
 
 		printf("Done.\n");
@@ -280,7 +279,6 @@ namespace glauber {
 		double a, c, d, det;
 
 		// b = c
-		printf("CHECK 8\n");
 		a = D2chi_Df_wn2();
 		c = D2chi_Dsigma_sat_Df_wn();
 		d = D2chi_Dsigma_sat2();
@@ -293,22 +291,16 @@ namespace glauber {
 
 	void NucleusPair::fill_Dchi() {
 
-		printf("CHECK 6\n");
 		Dchi_[0] = Dchi_Df_wn();
-		printf("CHECK 7\n");
 		Dchi_[1] = Dchi_Dsigma_sat();
 	}
 
 	void NucleusPair::fill_step() {
 
-		printf("CHECK 2\n");
 		fill_Dchi(); // This is quite time intensive
-		printf("CHECK 3\n");
 		fill_H(); // This is even more time intensive
-		printf("CHECK 4\n");
 		param_step_[0] = H_[0][0]*Dchi_[0]+H_[0][1]*Dchi_[1];
 		param_step_[1] = H_[1][0]*Dchi_[0]+H_[1][1]*Dchi_[1];
-		printf("CHECK 5\n");
 	}
 
 	double NucleusPair::get_chi() {
