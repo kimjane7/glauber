@@ -35,6 +35,7 @@ public:
 
 	std::vector<double> params_, param_step_, Dchi_;
 	std::vector<std::vector<double>> liam_, jane_, H_;
+	std::vector<std::vector<double>> T1_, T2_;
 
 	NucleusPair(Nucleus *N1_set, Nucleus *N2_set, double b_set,
 		double min_set, double max_set, int nmax_set);
@@ -42,6 +43,7 @@ public:
 	void minimize_chi();
 
 private:
+	
 	double normalize();
 	double get_epsilon(double x, double y);
 	double get_epsilon_wn(double x, double y);
@@ -49,6 +51,7 @@ private:
 
 	void print_epsilon();
 	void fetch_liam();
+	void store_thickness();
 
 	void fill_H();
 	void fill_Dchi();

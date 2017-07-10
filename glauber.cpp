@@ -112,14 +112,19 @@ namespace glauber {
 		H_.resize(2);
 		for(int i = 0; i < 2; i++) H_[i].resize(2);
 
-		// resize data matrices to nmax x nmax
+		// resize matrices to nmax x nmax
 		jane_.resize(nmax_);
 		liam_.resize(nmax_);
+		T1_.resize(nmax_);
+		T2_.resize(nmax_);
 		for(int i = 0; i < nmax_; i++) {
 			jane_[i].resize(nmax_);
 			liam_[i].resize(nmax_);
+			T1_[i].resize(nmax_);
+			T2_[i].resize(nmax_);
 		}
 
+		store_thickness();
 		fetch_liam();
 
 	}
@@ -225,6 +230,23 @@ namespace glauber {
 
 		fclose(fptr);
 		printf("Done.\n");
+	}
+
+	void NucleusPair::store_thickness() {
+
+		printf("%s\n", "Storing thicknesses...");
+
+		double i, j, x, y, dx = (max_-min_)/nmax_, dy = dx;
+
+		for(y = min_; y < max_; y += dy) {
+			i = trunc((y-min_)/dy);
+			for(x = min_; x < max_; x += dx) {
+				j = trunc((x-min_)/dx);
+				T1_[i][j] = N1_->get_T(x+0.5*b_,y);
+				T2_[i][j] = N2_->get_T(x-0.5*b_,y);
+			}
+		}
+
 	}
 
 	void NucleusPair::minimize_chi() {
@@ -439,9 +461,13 @@ namespace glauber {
 	double NucleusPair::Depsilon_wn_Dsigma_sat(double x, double y) {
 
 		double T1, T2, sigma_sat = params_[1], Depsilon_wn_Dsigma_sat;
+		double i, j, dx = (max_-min_)/nmax_, dy = dx;
 
-		T1 = N1_->get_T(x+0.5*b_,y);
-		T2 = N2_->get_T(x-0.5*b_,y);
+		i = trunc((y-min_)/dy);
+		j = trunc((x-min_)/dx);
+
+		T1 = T1_[i][j];
+		T2 = T2_[i][j];
 
 		Depsilon_wn_Dsigma_sat = (0.5*norm_/sigma_sat)*T1*T2*(exp(-T1*sigma_sat)+exp(-T2*sigma_sat));
 		Depsilon_wn_Dsigma_sat += -(0.5*norm_*T1/(sigma_sat*sigma_sat))*(1.0-exp(-T2*sigma_sat));
@@ -453,9 +479,13 @@ namespace glauber {
 	double NucleusPair::D2epsilon_wn_Dsigma_sat2(double x, double y) {
 
 		double T1, T2, sigma_sat = params_[1], D2epsilon_wn_Dsigma_sat2;
+		double i, j, dx = (max_-min_)/nmax_, dy = dx;
+		
+		i = trunc((y-min_)/dy);
+		j = trunc((x-min_)/dx);
 
-		T1 = N1_->get_T(x+0.5*b_,y);
-		T2 = N2_->get_T(x-0.5*b_,y);
+		T1 = T1_[i][j];
+		T2 = T2_[i][j];
 
 		D2epsilon_wn_Dsigma_sat2 = (norm_*T1/pow(sigma_sat,3.0))*(1.0-exp(-T2*sigma_sat));
 		D2epsilon_wn_Dsigma_sat2 += (norm_*T2/pow(sigma_sat,3.0))*(1.0-exp(-T1*sigma_sat));
@@ -468,10 +498,13 @@ namespace glauber {
 	double NucleusPair::Depsilon_sat_Dsigma_sat(double x, double y) {
 
 		double T1, T2, Tmin, Tmax, sigma_sat = params_[1], Depsilon_sat_Dsigma_sat;
+		double i, j, dx = (max_-min_)/nmax_, dy = dx;
+		
+		i = trunc((y-min_)/dy);
+		j = trunc((x-min_)/dx);
 
-		// N1 centered at (-b/2,0) and N2 centered at (b/2,0)
-		T1 = N1_->get_T(x+0.5*b_,y);
-		T2 = N2_->get_T(x-0.5*b_,y);
+		T1 = T1_[i][j];
+		T2 = T2_[i][j];
 
 		if(T1+T2==0.0) Tmin = 0.0;
 		else Tmin = 2.0*T1*T2/(T1+T2);
@@ -486,10 +519,13 @@ namespace glauber {
 	double NucleusPair::D2epsilon_sat_Dsigma_sat2(double x, double y) {
 	
 		double T1, T2, Tmin, Tmax, sigma_sat = params_[1], D2epsilon_sat_Dsigma_sat2;
+		double i, j, dx = (max_-min_)/nmax_, dy = dx;
+		
+		i = trunc((y-min_)/dy);
+		j = trunc((x-min_)/dx);
 
-		// N1 centered at (-b/2,0) and N2 centered at (b/2,0)
-		T1 = N1_->get_T(x+0.5*b_,y);
-		T2 = N2_->get_T(x-0.5*b_,y);
+		T1 = T1_[i][j];
+		T2 = T2_[i][j];
 
 		if(T1+T2==0.0) Tmin = 0.0;
 		else Tmin = 2.0*T1*T2/(T1+T2);
