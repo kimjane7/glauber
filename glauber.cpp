@@ -232,13 +232,28 @@ namespace glauber {
 		}
 	}
 
+	void NucleusPair::fill_H() {
+
+		double a, b, d, det;
+
+		a = D2chi2_DN2();
+		b = D2chi2_DN_Dfwn();
+		d = D2chi2_Dfwn2();
+		det = a*d-b*b;
+
+		H_[0][0] = -d/det;
+		H_[0][1] = H_[1][0] = b/det;
+		H_[1][1] = -a/det;
+
+	}
+
 	void NucleusPair::fill_increments() {
 
 		Dchi2_DN();
 		Dchi2_Dfwn();
-		D2chi2_DN_Dfwn();
-		delta_N_ = Dchi2_Dfwn_/D2chi2_DN_Dfwn_;
-		delta_fwn_ = Dchi2_DN_/D2chi2_DN_Dfwn_;
+		fill_H();
+		delta_N_ = H_[0][0]*Dchi2_DN_+H_[0][1]*Dchi2_Dfwn_;
+		delta_fwn_ = H_[1][0]*Dchi2_DN_+H_[1][1]*Dchi2_Dfwn_;
 	}
 
 	double NucleusPair::get_epsilon(double x, double y) {
@@ -313,22 +328,47 @@ namespace glauber {
 		}
 	}
 
+	double NucleusPair::D2chi2_DN2() {
+
+		double D2chi2_DN2 = 0.0;
+
+		for(i = 0; i < nmax_; ++i) {
+			for(j = 0; j < nmax_; ++j) {
+				D2chi2_DN2 += 2.0*pow(fwn_*epsilon_wn_[i][j]+(1-fwn_)*epsilon_sat_[i][j],2.0);
+			}
+		}
+
+		return D2chi2_DN2;
+	}
+
+	double NucleusPair::D2chi2_Dfwn2() {
+
+		double D2chi2_Dfwn2 = 0.0;
+
+		for(i = 0; i < nmax_; ++i) {
+			for(j = 0; j < nmax_; ++j) {
+				D2chi2_Dfwn2 += 2.0*N_*N_*pow(epsilon_wn_[i][j]-epsilon_sat_[i][j],2.0);
+			}
+		}
+
+		return D2chi2_Dfwn2;
+	}
+
 	// same as D2chi2_Dfwn_DN()
-	void NucleusPair::D2chi2_DN_Dfwn() {
+	double NucleusPair::NucleusPair::D2chi2_DN_Dfwn() {
 
-		double epsilon_wn, epsilon_sat;
-
-		D2chi2_DN_Dfwn_ = 0.0;
+		double epsilon_wn, epsilon_sat, D2chi2_DN_Dfwn = 0.0;
 		
 		for(i = 0; i < nmax_; ++i) {
 			for(j = 0; j < nmax_; ++j) {
 				epsilon_wn = epsilon_wn_[i][j];
 				epsilon_sat = epsilon_sat_[i][j];
-				D2chi2_DN_Dfwn_ += -2.0*(epsilon_wn-epsilon_sat)*
+				D2chi2_DN_Dfwn += -2.0*(epsilon_wn-epsilon_sat)*
 					(N_*(fwn_*epsilon_wn+(1-fwn_)*epsilon_sat)+jane_[i][j]-liam_[i][j]);
 			}
 		}
 
+		return D2chi2_DN_Dfwn;
 	}
 
 

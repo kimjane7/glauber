@@ -34,7 +34,7 @@ public:
 	double x, y, dx_, min_, max_, b_;
 	double N_, fwn_, sigma_sat_;
 	double delta_N_, delta_fwn_;
-	double Dchi2_DN_, Dchi2_Dfwn_, D2chi2_DN_Dfwn_;
+	double Dchi2_DN_, Dchi2_Dfwn_;
 
 	std::vector<std::vector<double>> liam_, jane_;
 	std::vector<std::vector<double>> T1_, T2_, H_;
@@ -48,11 +48,11 @@ public:
 
 private:
 	
-	//double normalize();
 	void fetch_jane();
 	void fetch_liam();
 	void store_thickness();
 	void store_epsilons();
+	void fill_H();
 	void fill_increments();
 
 	double get_epsilon(double x, double y);
@@ -61,7 +61,10 @@ private:
 
 	void Dchi2_DN();
 	void Dchi2_Dfwn();
-	void D2chi2_DN_Dfwn();
+	double D2chi2_DN2();
+	double D2chi2_Dfwn2();
+	double D2chi2_DN_Dfwn();
+
 
 };
 
