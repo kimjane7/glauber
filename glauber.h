@@ -30,51 +30,38 @@ class NucleusPair {
 public:
 	
 	Nucleus *N1_, *N2_;
-	int nmax_;
-	double norm_, b_, min_, max_;
+	int i, j, nmax_;
+	double x, y, dx_, min_, max_, b_;
+	double N_, fwn_, sigma_sat_;
+	double delta_N_, delta_fwn_;
+	double Dchi2_DN_, Dchi2_Dfwn_, D2chi2_DN_Dfwn_;
 
-	std::vector<double> params_, param_step_, Dchi_;
-	std::vector<std::vector<double>> liam_, jane_, H_;
-	std::vector<std::vector<double>> T1_, T2_;
+	std::vector<std::vector<double>> liam_, jane_;
+	std::vector<std::vector<double>> T1_, T2_, H_;
+	std::vector<std::vector<double>> epsilon_wn_, epsilon_sat_;
 
 	NucleusPair(Nucleus *N1_set, Nucleus *N2_set, double b_set,
 		double min_set, double max_set, int nmax_set);
 
-	void minimize_chi();
+	void minimize_chi2();
+	double get_chi2();
 
 private:
 	
-	double normalize();
+	//double normalize();
+	void fetch_jane();
+	void fetch_liam();
+	void store_thickness();
+	void store_epsilons();
+	void fill_increments();
+
 	double get_epsilon(double x, double y);
 	double get_epsilon_wn(double x, double y);
 	double get_epsilon_sat(double x, double y);
 
-	void print_epsilon();
-	void fetch_liam();
-	void store_thickness();
-
-	void fill_H();
-	void fill_Dchi();
-	void fill_step();
-
-	double get_chi();
-	double Dchi_Df_wn();
-	double Dchi_Dsigma_sat();
-	double D2chi_Df_wn2();
-	double D2chi_Dsigma_sat2();
-	double D2chi_Dsigma_sat_Df_wn();
-	double D2chi_Df_wn_Dsigma_sat();
-
-	double Depsilon_Df_wn(double x, double y);
-	double Depsilon_Dsigma_sat(double x, double y);
-	double D2epsilon_Dsigma_sat2(double x, double y);
-	double D2epsilon_Dsigma_sat_Df_wn(double x, double y);
-
-	double Depsilon_wn_Dsigma_sat(double x, double y);
-	double D2epsilon_wn_Dsigma_sat2(double x, double y);
-
-	double Depsilon_sat_Dsigma_sat(double x, double y);
-	double D2epsilon_sat_Dsigma_sat2(double x, double y);
+	void Dchi2_DN();
+	void Dchi2_Dfwn();
+	void D2chi2_DN_Dfwn();
 
 };
 

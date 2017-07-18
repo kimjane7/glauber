@@ -10,9 +10,9 @@ int main(int argc, char *argv[]){
 	Nucleus* Pb2 = new Nucleus(207);
 
 	// make Pb-Pb nuclei pair with 10.0 fm impact parameter
-	NucleusPair* Pb_Pb = new NucleusPair(Pb1, Pb2, 10.0, -10.0, 10.0, 100);
+	NucleusPair* Pb_Pb = new NucleusPair(Pb1, Pb2, 1.0, -10.0, 10.0, 100);
 
-	Pb_Pb->minimize_chi();
+	Pb_Pb->minimize_chi2();
 
 	return 0;
 }
