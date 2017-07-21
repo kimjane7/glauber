@@ -98,7 +98,7 @@ namespace glauber {
 		sigma_sat_ = 42.0;
 
 		// initialize parameters and derivatives
-		N_ = 1.0;
+		N_ = 42.0;
 		fwn_ = 0.5;
 		Dchi2_DN_ = 1.0;
 		Dchi2_Dfwn_ = 1.0;
@@ -150,7 +150,12 @@ namespace glauber {
 			
 			// apply newton's method
 			N_ += delta_N_;
-			fwn_ += delta_fwn_;
+
+			//fwn_ += 0.5*delta_fwn_;
+
+			if(delta_fwn_>0) fwn_ += 0.5*(1-fwn_)*delta_fwn_;
+			else fwn_ += 0.5*fwn_*delta_fwn_;
+	
 
 			printf("Chi2 = %.5e\tN = %.5e\tfwn = %.5e\tDchi2_DN = %.5e\tDchi2_Dfwn = %.5e\n",
 				get_chi2(),N_,fwn_,Dchi2_DN_,Dchi2_Dfwn_);
