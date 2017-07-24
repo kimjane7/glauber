@@ -21,6 +21,15 @@ plt.figure(1)
 plt.figure(figsize=(7,7))
 plt.rc('text', usetex=True)
 
+data = get_array(101, "test.dat")
+T = plt.subplot(111)
+plt.contourf(data, 100, cmap=plt.cm.get_cmap('magma_r'))
+plt.contour(data, 5, colors='#FFFFFF')
+T.get_xaxis().set_visible(False)
+T.get_yaxis().set_visible(False)
+#plt.clabel(T_lines, inline=1, fontsize=10, manual=True)
+
+'''
 # run the glauber program to generate the data file
 os.system("./Glauber")
 
@@ -34,6 +43,7 @@ plt.contour(data, 5, colors='#FFFFFF')
 T.get_xaxis().set_visible(False)
 T.get_yaxis().set_visible(False)
 #plt.clabel(T_lines, inline=1, fontsize=10, manual=True)
+'''
 
 plt.savefig('energy_density.pdf',format='pdf')
 os.system('open energy_density.pdf')

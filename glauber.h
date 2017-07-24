@@ -15,6 +15,7 @@ public:
 	
 	constexpr static double a_ = 0.546; // only constexpr, const enum, and const int values
 	constexpr static double rho0_ = 0.159; // are allowed to be set in class definition
+	constexpr static double dR_ = 4.595*a_; // dR_ defined by rho(R_+dR_)=0.01*rho0_
 	double R_;
 	int A_;
 
@@ -30,8 +31,8 @@ class NucleusPair {
 public:
 	
 	Nucleus *N1_, *N2_;
-	int i, j, nmax_;
-	double x, y, dx_, min_, max_, b_;
+	int nmax_;
+	double x, y, dxy_, min_, max_, b_;
 	double N_, fwn_, sigma_sat_;
 	double delta_N_, delta_fwn_;
 	double Dchi2_DN_, Dchi2_Dfwn_;
@@ -44,6 +45,7 @@ public:
 		double min_set, double max_set, int nmax_set);
 
 	void minimize_chi2();
+	void test_chi2();
 	double get_chi2();
 
 private:
